@@ -448,6 +448,10 @@ It exposes feed records as entities, imports past records into long-term statist
 
 カードJSの登録は2経路で行われます。`add_extra_js_url`（フロントの土台ページへの埋め込み）と、Lovelace リソースへの自動登録（ストレージモード時のみ。HACS カードと同じ読み込み経路）です。2経路のURLはクエリ文字列を意図的に分けてあります（土台側は `?e=<版数>`、リソース側は `?v=<版数>`）。ブラウザはモジュールの読み込み結果をURL単位で保持するため、同一URLだと片方の取得失敗がもう片方にも及んで「Custom element doesn't exist」のままになることがあり、分離することで片方が失敗してももう片方から読み込めます。リソース一覧には `/piyolog_static/…?v=<版数>` の2件が自動で追加・更新されます（YAML モードでは追加されません）。
 
+各カードの詳細とトラブルシューティングは [同梱カードの詳細](docs/cards.md) にまとめています。
+
+![タイムラインカードのサンプル](docs/images/timeline-card.png)
+
 ```yaml
 type: custom:piyolog-card
 entity: sensor.piyolog_timeline
@@ -473,6 +477,8 @@ entity: sensor.piyolog_timeline
 ### 経過時間ゲージカード `custom:piyolog-elapsed-card`
 
 最後の記録からどれだけ時間が経ったかを、半円ゲージで表示するカードも同梱されています。タイムラインカードと同じく自動登録され、ビジュアルエディタにも対応しています。ゲージは30秒ごとに再計算されるため、記録が無くても経過時間が進みます。
+
+![経過時間ゲージカードのサンプル](docs/images/elapsed-cards.png)
 
 ```yaml
 # おむつ経過時間（うんち／おしっこのうち新しい方から計測）
@@ -583,6 +589,9 @@ tests/
   test_init.py         統合セットアップのテスト
   test_websocket.py    WebSocket API のテスト
   test_frontend.py     同梱カードの同梱・登録チェック
+docs/
+  cards.md             同梱カードの詳細とトラブルシューティング
+  images/              カードのサンプル画像（実際のカードコード＋架空データで描画）
 ```
 
 ## テスト
