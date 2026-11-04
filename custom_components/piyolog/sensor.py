@@ -108,7 +108,7 @@ LAST_EVENT_TYPES: list[tuple[str, str, str]] = [
     ("last_sleep", TYPE_SLEEP, "mdi:sleep"),
     ("last_wake_up", TYPE_WAKE_UP, "mdi:alarm"),
     ("last_pee", TYPE_PEE, "mdi:toilet"),
-    ("last_poop", TYPE_POOP, "mdi:emoticon-poo"),
+    ("last_poop", TYPE_POOP, "mdi:emoticon-poop"),
     ("last_drink", TYPE_DRINK, "mdi:cup-water"),
     ("last_solid", TYPE_SOLID, "mdi:food-apple-outline"),
     ("last_snack", TYPE_SNACK, "mdi:cookie"),
@@ -411,7 +411,7 @@ TODAY_SENSORS: list[PiyologSensorDescription] = [
     PiyologSensorDescription(
         key="today_poop_count",
         translation_key="today_poop_count",
-        icon="mdi:emoticon-poo",
+        icon="mdi:emoticon-poop",
         state_class=SensorStateClass.MEASUREMENT,
         value_fn=lambda d: d.today_count(TYPE_POOP),
     ),

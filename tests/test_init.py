@@ -104,5 +104,16 @@ async def test_setup_creates_piyolog_entities(hass: HomeAssistant) -> None:
     # Types with no records are unknown, not errors.
     assert hass.states.get("sensor.piyolog_last_poop").state == "unknown"
 
+    # Regression: the MDI name is "emoticon-poop", not "emoticon-poo"
+    # (the latter does not exist and renders as a blank icon).
+    assert (
+        hass.states.get("sensor.piyolog_last_poop").attributes.get("icon")
+        == "mdi:emoticon-poop"
+    )
+    assert (
+        hass.states.get("sensor.piyolog_today_poop_count").attributes.get("icon")
+        == "mdi:emoticon-poop"
+    )
+
     assert await hass.config_entries.async_unload(entry.entry_id)
     await hass.async_block_till_done()
