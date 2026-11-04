@@ -211,6 +211,18 @@ def test_timeline_today_newest_first_with_summary():
     assert formula["label"] == "ミルク"
 
 
+def test_history_by_type():
+    data = _aggregate()
+    weight_history = data.history_by_type["Weight"]
+    # Both the yesterday and today measurements, oldest first.
+    assert [h["value"] for h in weight_history] == [6.25, 6.3]
+    times = [h["time"] for h in weight_history]
+    assert times == sorted(times)
+    assert [h["value"] for h in data.history_by_type["Temperature"]] == [36.7]
+    # Non-measurement types have no history.
+    assert "Pee" not in data.history_by_type
+
+
 def test_summarize_breast_feeding():
     snap = parse_feed(
         payload(

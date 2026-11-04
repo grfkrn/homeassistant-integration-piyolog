@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.3.0 (2026-11-04)
+
+- 身体計測センサー（体重・身長・体温・頭囲・胸囲）に `history` 属性を追加：フィード範囲内の全計測点を `{time, value}` の古い順リスト（最大200点）で保持。統合導入前の記録もダッシュボードのグラフ（apexcharts-card の data_generator 等）で表示できるようにするため
+
 ## 1.2.0 (2026-11-04)
 
 - `sensor.piyolog_today_breast_feeding_total`（今日の母乳量）を追加：母乳レコードに記録された ml の当日合計。属性に `measured_count`（ml記録のある回数）と `count_today`（授乳回数）。ml未記録の回は合計に含めない

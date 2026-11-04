@@ -29,18 +29,29 @@ from .const import (
     POOP_HARDNESS_JA,
     SUPPORTED_SCHEMA_VERSION,
     TYPE_BREAST_FEEDING,
+    TYPE_CHEST,
     TYPE_DRINK,
     TYPE_EXPRESSED_BREAST_MILK,
     TYPE_FORMULA,
+    TYPE_HEAD,
+    TYPE_HEIGHT,
     TYPE_LABELS_JA,
     TYPE_PUMPING,
     TYPE_SLEEP,
+    TYPE_TEMPERATURE,
     TYPE_WAKE_UP,
+    TYPE_WEIGHT,
 )
 
 FEED_TIMEOUT_SECONDS = 30
 TIMELINE_LIMIT = 50
 RECENT_LIMIT = 100
+HISTORY_LIMIT = 200
+
+#: Record types whose measurements are exposed as a ``history`` attribute
+#: (used by dashboard charts, since HA's own recorder only holds data from
+#: the day the integration was installed).
+HISTORY_TYPES = {TYPE_WEIGHT, TYPE_HEIGHT, TYPE_TEMPERATURE, TYPE_HEAD, TYPE_CHEST}
 
 
 class FeedError(Exception):
@@ -251,6 +262,7 @@ class AggregatedData:
     sleeping_since: datetime | None = None
     timeline_today: list[dict[str, Any]] = field(default_factory=list)
     recent_events: list[dict[str, Any]] = field(default_factory=list)
+    history_by_type: dict[str, list[dict[str, Any]]] = field(default_factory=dict)
 
     def last(self, record_type: str) -> Record | None:
         return self.last_by_type.get(record_type)
@@ -278,6 +290,16 @@ def aggregate(
         current = data.last_by_type.get(record.type)
         if current is None or record.dt >= current.dt:
             data.last_by_type[record.type] = record
+        if record.type in HISTORY_TYPES:
+            num = record.numeric_value()
+            if num is not None:
+                history = data.history_by_type.setdefault(record.type, [])
+                history.append(
+                    {"time": record.dt.astimezone(tz).isoformat(), "value": num}
+                )
+    for history in data.history_by_type.values():
+        # Records arrive in ascending time order; keep the newest points.
+        del history[:-HISTORY_LIMIT]
 
     today_records = [
         r for r in records if today_start <= r.dt.astimezone(tz) < today_end

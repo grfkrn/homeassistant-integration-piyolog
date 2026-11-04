@@ -76,6 +76,9 @@ async def test_setup_creates_piyolog_entities(hass: HomeAssistant) -> None:
     assert weight is not None
     assert weight.state == "6.3"
     assert weight.attributes.get("measured_at") is not None
+    history = weight.attributes.get("history")
+    assert isinstance(history, list) and len(history) == 1
+    assert history[0]["value"] == 6.3
 
     last_formula = hass.states.get("sensor.piyolog_last_formula")
     assert last_formula is not None

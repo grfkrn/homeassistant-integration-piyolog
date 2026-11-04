@@ -304,7 +304,15 @@ class PiyologBodySensor(PiyologEntity, SensorEntity):
         record = self.coordinator.data.last(BODY_TYPES[self._key])
         if record is None:
             return None
-        return {"measured_at": record.dt.isoformat()}
+        return {
+            "measured_at": record.dt.isoformat(),
+            # All measurements in the feed window (oldest first), so
+            # dashboard charts can show data from before the integration
+            # was installed (HA's recorder has no older states).
+            "history": self.coordinator.data.history_by_type.get(
+                BODY_TYPES[self._key], []
+            ),
+        }
 
 
 class PiyologFootSizeSensor(PiyologEntity, SensorEntity):
