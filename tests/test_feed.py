@@ -211,6 +211,36 @@ def test_timeline_today_newest_first_with_summary():
     assert formula["label"] == "ミルク"
 
 
+def test_measurement_buckets_past_days_only():
+    data = _aggregate()
+    buckets = data.measurement_buckets["Weight"]
+    # Yesterday's 10:00 measurement becomes a bucket; today's is left to
+    # the recorder (it compiles today's statistics from live states).
+    assert len(buckets) == 1
+    assert buckets[0]["start"] == datetime(2026, 9, 8, 10, 0, tzinfo=UTC)
+    assert buckets[0]["mean"] == buckets[0]["min"] == buckets[0]["max"] == 6.25
+    assert "Temperature" not in data.measurement_buckets
+
+
+def test_daily_totals():
+    data = _aggregate()
+
+    def by_day(key):
+        return {
+            p["start"].date().isoformat(): p["value"]
+            for p in data.daily_totals[key]
+        }
+
+    assert by_day("formula_ml") == {"2026-09-09": 120.0}
+    assert by_day("breast_feeding_count") == {"2026-09-09": 1.0}
+    assert by_day("breast_feeding_minutes") == {"2026-09-09": 9.0}
+    assert by_day("pee_count") == {"2026-09-09": 2.0}
+    assert by_day("poop_count") == {"2026-09-09": 1.0}
+    # Sleep crossing midnight is split across both days; the still-open
+    # sleep counts up to `now`.
+    assert by_day("sleep_minutes") == {"2026-09-08": 120.0, "2026-09-09": 240.0}
+
+
 def test_history_by_type():
     data = _aggregate()
     weight_history = data.history_by_type["Weight"]

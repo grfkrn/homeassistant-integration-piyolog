@@ -16,7 +16,7 @@ Feed specification (schema v1):
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from datetime import datetime, time, timedelta, tzinfo
+from datetime import date, datetime, time, timedelta, tzinfo
 import math
 from typing import Any
 
@@ -36,6 +36,8 @@ from .const import (
     TYPE_HEAD,
     TYPE_HEIGHT,
     TYPE_LABELS_JA,
+    TYPE_PEE,
+    TYPE_POOP,
     TYPE_PUMPING,
     TYPE_SLEEP,
     TYPE_TEMPERATURE,
@@ -263,6 +265,15 @@ class AggregatedData:
     timeline_today: list[dict[str, Any]] = field(default_factory=list)
     recent_events: list[dict[str, Any]] = field(default_factory=list)
     history_by_type: dict[str, list[dict[str, Any]]] = field(default_factory=dict)
+    # Hourly measurement buckets for statistics import (past days only;
+    # the recorder compiles today's buckets from live states itself).
+    # Keyed by feed type: [{"start": datetime, "mean": f, "min": f, "max": f}]
+    measurement_buckets: dict[str, list[dict[str, Any]]] = field(
+        default_factory=dict
+    )
+    # Per-day totals over the whole feed window, for statistics import.
+    # Keyed by stat key: [{"start": datetime (local midnight), "value": f}]
+    daily_totals: dict[str, list[dict[str, Any]]] = field(default_factory=dict)
 
     def last(self, record_type: str) -> Record | None:
         return self.last_by_type.get(record_type)
@@ -283,23 +294,69 @@ def aggregate(
     ``now`` in ``tz``.
     """
     data = AggregatedData(generated_at=generated_at, record_count=len(records))
-    today_start = datetime.combine(now.astimezone(tz).date(), time.min, tzinfo=tz)
+    today_date = now.astimezone(tz).date()
+    today_start = datetime.combine(today_date, time.min, tzinfo=tz)
     today_end = today_start + timedelta(days=1)
+
+    daily: dict[str, dict[date, float]] = {}
+    bucket_values: dict[tuple[str, datetime], list[float]] = {}
+
+    def add_daily(key: str, day: date, amount: float) -> None:
+        by_day = daily.setdefault(key, {})
+        by_day[day] = by_day.get(day, 0.0) + amount
 
     for record in records:
         current = data.last_by_type.get(record.type)
         if current is None or record.dt >= current.dt:
             data.last_by_type[record.type] = record
+        num = record.numeric_value()
         if record.type in HISTORY_TYPES:
-            num = record.numeric_value()
             if num is not None:
                 history = data.history_by_type.setdefault(record.type, [])
                 history.append(
                     {"time": record.dt.astimezone(tz).isoformat(), "value": num}
                 )
+                hour = record.dt.replace(minute=0, second=0, microsecond=0)
+                if hour.astimezone(tz).date() < today_date:
+                    bucket_values.setdefault((record.type, hour), []).append(num)
+        day = record.dt.astimezone(tz).date()
+        if record.type == TYPE_BREAST_FEEDING:
+            add_daily("breast_feeding_count", day, 1)
+            left = record.raw.get("leftTime")
+            right = record.raw.get("rightTime")
+            seconds = 0
+            if isinstance(left, (int, float)):
+                seconds += int(left)
+            if isinstance(right, (int, float)):
+                seconds += int(right)
+            if seconds:
+                add_daily("breast_feeding_minutes", day, seconds / 60)
+            if num is not None:
+                add_daily("breast_feeding_ml", day, num)
+        elif record.type == TYPE_PEE:
+            add_daily("pee_count", day, 1)
+        elif record.type == TYPE_POOP:
+            add_daily("poop_count", day, 1)
+        elif record.type == TYPE_FORMULA and num is not None:
+            add_daily("formula_ml", day, num)
+        elif record.type == TYPE_EXPRESSED_BREAST_MILK and num is not None:
+            add_daily("expressed_breast_milk_ml", day, num)
+        elif record.type == TYPE_PUMPING and num is not None:
+            add_daily("pumping_ml", day, num)
+        elif record.type == TYPE_DRINK and num is not None:
+            add_daily("drink_ml", day, num)
     for history in data.history_by_type.values():
         # Records arrive in ascending time order; keep the newest points.
         del history[:-HISTORY_LIMIT]
+    for (feed_type, hour), values in sorted(bucket_values.items()):
+        data.measurement_buckets.setdefault(feed_type, []).append(
+            {
+                "start": hour,
+                "mean": sum(values) / len(values),
+                "min": min(values),
+                "max": max(values),
+            }
+        )
 
     today_records = [
         r for r in records if today_start <= r.dt.astimezone(tz) < today_end
@@ -329,7 +386,22 @@ def aggregate(
         elif record.type == TYPE_DRINK and num is not None:
             data.today_drink_ml += num
 
-    _aggregate_sleep(data, records, today_start, today_end, now)
+    intervals = _aggregate_sleep(data, records, today_start, today_end, now)
+    for start, end in intervals:
+        cursor = start
+        while cursor < min(end, now):
+            day_start = datetime.combine(
+                cursor.astimezone(tz).date(), time.min, tzinfo=tz
+            )
+            day_end = day_start + timedelta(days=1)
+            overlap_end = min(end, day_end, now)
+            if overlap_end > cursor:
+                add_daily(
+                    "sleep_minutes",
+                    day_start.date(),
+                    (overlap_end - cursor).total_seconds() / 60,
+                )
+            cursor = day_end
 
     data.timeline_today = [
         _timeline_entry(record, tz)
@@ -344,6 +416,14 @@ def aggregate(
             :RECENT_LIMIT
         ]
     ]
+    for key, by_day in daily.items():
+        data.daily_totals[key] = [
+            {
+                "start": datetime.combine(day, time.min, tzinfo=tz),
+                "value": round(value, 1),
+            }
+            for day, value in sorted(by_day.items())
+        ]
     return data
 
 
@@ -365,8 +445,11 @@ def _aggregate_sleep(
     today_start: datetime,
     today_end: datetime,
     now: datetime,
-) -> None:
-    """Pair Sleep/WakeUp records and compute sleep state and today's total."""
+) -> list[tuple[datetime, datetime]]:
+    """Pair Sleep/WakeUp records and compute sleep state and today's total.
+
+    Returns the sleep intervals (an open interval ends at ``now``).
+    """
     sleeping_since: datetime | None = None
     intervals: list[tuple[datetime, datetime]] = []
     for record in records:
@@ -388,3 +471,4 @@ def _aggregate_sleep(
         if overlap_end > overlap_start:
             total += (overlap_end - overlap_start).total_seconds()
     data.today_sleep_seconds = int(total)
+    return intervals

@@ -26,6 +26,7 @@ from .feed import (
     fetch_feed,
     merge_snapshots,
 )
+from .statistics import async_import_feed_statistics
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -55,6 +56,7 @@ class PiyologCoordinator(DataUpdateCoordinator[AggregatedData]):
         self._long_last_fetch: datetime | None = None
         self._long_last_error: str | None = None
         self._consecutive_404 = 0
+        self._statistics_state: dict = {}
 
     async def _async_update_data(self) -> AggregatedData:
         session = async_get_clientsession(self.hass)
@@ -75,12 +77,15 @@ class PiyologCoordinator(DataUpdateCoordinator[AggregatedData]):
 
         records = merge_snapshots(snapshots)
         generated_at = max(s.generated_at for s in snapshots)
-        return aggregate(
+        data = aggregate(
             records,
             tz=dt_util.get_default_time_zone(),
             now=dt_util.utcnow(),
             generated_at=generated_at,
         )
+        # Backfill long-term statistics with the feed's past records.
+        async_import_feed_statistics(self.hass, data, self._statistics_state)
+        return data
 
     async def _fetch_long(
         self, session
