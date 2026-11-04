@@ -42,6 +42,20 @@ Set a feed URL and your baby's records — feeding, sleep, diapers, body measure
 
 カスタム記録（Custom1〜10）は `sensor.piyolog_last_custom` に集約されます（フィードにはカスタム記録の設定名が含まれないため）。
 
+## 同梱の Lovelace カード
+
+統合には専用カード `custom:piyolog-card` が同梱されており、セットアップ時に自動で登録されます（リソースの手動追加は不要です）。ダッシュボードのカード選択画面から「PiyoLog Timeline」を追加できます。
+
+- 1日分の記録を、フィードの時刻・値そのままでタイムライン表示します（前日/翌日ボタン・日付ピッカー・「今日」ボタンで移動）
+- その日のサマリー（授乳回数・母乳量・睡眠時間・排泄回数など）と、起床記録には睡眠時間も表示します
+- 設定は対象センサーの指定だけです（例：`sensor.piyolog_timeline`）。そこから対象のお子様を特定します
+- 遡れる範囲はフィードの取得範囲までです（最大28日）。記録は WebSocket API で都度取得するため、センサー属性の件数上限に影響されません
+
+```yaml
+type: custom:piyolog-card
+entity: sensor.piyolog_timeline
+```
+
 ## 長期統計への自動インポート
 
 この統合は、フィードの過去記録を Home Assistant の **長期統計** へ自動で投入します。設定は不要で、常時有効です（無効化する設定はありません）。

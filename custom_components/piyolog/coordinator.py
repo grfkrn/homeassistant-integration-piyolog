@@ -22,6 +22,7 @@ from .feed import (
     AggregatedData,
     FeedHttpError,
     FeedSnapshot,
+    Record,
     aggregate,
     fetch_feed,
     merge_snapshots,
@@ -57,6 +58,9 @@ class PiyologCoordinator(DataUpdateCoordinator[AggregatedData]):
         self._long_last_error: str | None = None
         self._consecutive_404 = 0
         self._statistics_state: dict = {}
+        # Latest merged feed records (ascending), kept so the WebSocket
+        # API can serve any day in the feed window to the Lovelace card.
+        self.records: list[Record] = []
 
     async def _async_update_data(self) -> AggregatedData:
         session = async_get_clientsession(self.hass)
@@ -76,6 +80,7 @@ class PiyologCoordinator(DataUpdateCoordinator[AggregatedData]):
                 snapshots.append(long_snapshot)
 
         records = merge_snapshots(snapshots)
+        self.records = records
         generated_at = max(s.generated_at for s in snapshots)
         data = aggregate(
             records,

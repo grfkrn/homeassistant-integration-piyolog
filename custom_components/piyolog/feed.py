@@ -427,6 +427,37 @@ def aggregate(
     return data
 
 
+def entries_for_day(
+    records: list[Record], tz: tzinfo, day: date, *, limit: int = 300
+) -> list[dict[str, Any]]:
+    """Timeline entries for one local calendar day, newest first.
+
+    Entries use the usual timeline format and carry the feed's original
+    times and values as-is. WakeUp entries whose sleep interval could be
+    paired (the Sleep record may be on the previous day) also carry
+    ``duration_minutes``.
+    """
+    wake_durations: dict[str, int] = {}
+    sleep_start: Record | None = None
+    for record in records:
+        if record.type == TYPE_SLEEP:
+            # Consecutive Sleep records: the newest start wins.
+            sleep_start = record
+        elif record.type == TYPE_WAKE_UP and sleep_start is not None:
+            wake_durations[record.event_id] = int(
+                (record.dt - sleep_start.dt).total_seconds() // 60
+            )
+            sleep_start = None
+    entries: list[dict[str, Any]] = []
+    day_records = [r for r in records if r.dt.astimezone(tz).date() == day]
+    for record in sorted(day_records, key=lambda r: r.dt, reverse=True)[:limit]:
+        entry = _timeline_entry(record, tz)
+        if record.event_id in wake_durations:
+            entry["duration_minutes"] = wake_durations[record.event_id]
+        entries.append(entry)
+    return entries
+
+
 def _timeline_entry(record: Record, tz: tzinfo) -> dict[str, Any]:
     entry: dict[str, Any] = {
         "time": record.dt.astimezone(tz).isoformat(),

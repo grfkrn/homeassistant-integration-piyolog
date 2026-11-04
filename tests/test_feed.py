@@ -241,6 +241,36 @@ def test_daily_totals():
     assert by_day("sleep_minutes") == {"2026-09-08": 120.0, "2026-09-09": 240.0}
 
 
+def test_entries_for_day():
+    from datetime import date as date_cls
+
+    from custom_components.piyolog.feed import entries_for_day, parse_feed
+
+    snapshot = parse_feed(payload(sample_records()))
+    entries = entries_for_day(list(snapshot.records), UTC, date_cls(2026, 9, 9))
+    # Newest first, only that day's records.
+    assert [e["type"] for e in entries] == [
+        "Pee",
+        "Formula",
+        "Sleep",
+        "Poop",
+        "Pee",
+        "Formula",
+        "Temperature",
+        "Weight",
+        "BreastFeeding",
+        "WakeUp",
+    ]
+    wake = entries[9]
+    assert wake["type"] == "WakeUp"
+    # Slept 22:00 (Sep 8) -> 02:00 (Sep 9) = 240 minutes, paired across days.
+    assert wake["duration_minutes"] == 240
+    bf = entries[8]
+    assert bf["summary"] == "左5分 右4分"
+    # A day with no records is an empty list, not an error.
+    assert entries_for_day(list(snapshot.records), UTC, date_cls(2026, 9, 1)) == []
+
+
 def test_history_by_type():
     data = _aggregate()
     weight_history = data.history_by_type["Weight"]
