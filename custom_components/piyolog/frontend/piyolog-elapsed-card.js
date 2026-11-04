@@ -89,20 +89,27 @@ function finiteNumber(value, fallback) {
   return Number.isFinite(num) ? num : fallback;
 }
 
-/** Point on the gauge semicircle for fraction f (0 = left, 1 = right). */
-function gaugePoint(cx, cy, r, f) {
-  const theta = Math.PI * (1 - f);
-  return [cx + r * Math.cos(theta), cy - r * Math.sin(theta)];
-}
+/**
+ * Gauge geometry (viewBox 0 0 220 128, center 110/110).
+ * Every arc is the same full semicircle path; visible segments are cut
+ * with stroke-dasharray in real path units (pi * r), so the drawing
+ * scales to any card width without arc-flag math and renders the same
+ * in every SVG engine.
+ */
+const TRACK_PATH = "M 28 110 A 82 82 0 0 1 192 110";
+const ZONE_PATH = "M 13 110 A 97 97 0 0 1 207 110";
+const TRACK_LEN = Math.PI * 82;
+const ZONE_LEN = Math.PI * 97;
 
-/** SVG arc path along the gauge semicircle from fraction a to b. */
-function gaugeArc(cx, cy, r, a, b) {
-  const span = b - a;
-  if (span <= 0) return "";
-  const [x1, y1] = gaugePoint(cx, cy, r, a);
-  const [x2, y2] = gaugePoint(cx, cy, r, Math.min(b, a + 0.999));
-  const large = span > 0.5 ? 1 : 0;
-  return `M ${x1.toFixed(2)} ${y1.toFixed(2)} A ${r} ${r} 0 ${large} 1 ${x2.toFixed(2)} ${y2.toFixed(2)}`;
+/** stroke-dasharray/offset showing only the [from, to] fraction of a path. */
+function dashSegment(from, to, len) {
+  const span = Math.max(0, Math.min(to, 1) - Math.max(from, 0));
+  const start = Math.max(from, 0);
+  const r2 = (n) => Math.round(n * 100) / 100;
+  return {
+    dasharray: `${r2(span * len)} ${r2(len)}`,
+    dashoffset: r2(-start * len),
+  };
 }
 
 class PiyologElapsedCard extends HTMLElement {
@@ -252,18 +259,20 @@ class PiyologElapsedCard extends HTMLElement {
         const frac = Math.min(elapsedHours / thresholds.max, 1);
         const yFrac = Math.min(thresholds.yellow / thresholds.max, 1);
         const rFrac = Math.min(thresholds.red / thresholds.max, 1);
-        const cx = 110;
-        const cy = 112;
+        const zoneGreen = dashSegment(0, yFrac, ZONE_LEN);
+        const zoneYellow = dashSegment(yFrac, rFrac, ZONE_LEN);
+        const zoneRed = dashSegment(rFrac, 1, ZONE_LEN);
+        const progress = dashSegment(0, frac, TRACK_LEN);
         body = `
           <div class="gauge">
-            <svg viewBox="0 0 220 124" role="img" aria-label="${esc(title)} ${esc(elapsedLabel)}">
-              <path d="${gaugeArc(cx, cy, 80, 0, 1)}" fill="none" stroke="var(--piyolog-track, rgba(127,127,127,0.25))" stroke-width="19" stroke-linecap="round"/>
-              <path d="${gaugeArc(cx, cy, 96, 0, yFrac)}" fill="none" stroke="${COLORS.green}" stroke-width="4" stroke-linecap="round"/>
-              <path d="${gaugeArc(cx, cy, 96, yFrac, rFrac)}" fill="none" stroke="${COLORS.yellow}" stroke-width="4" stroke-linecap="round"/>
-              <path d="${gaugeArc(cx, cy, 96, rFrac, 1)}" fill="none" stroke="${COLORS.red}" stroke-width="4" stroke-linecap="round"/>
-              <path d="${gaugeArc(cx, cy, 80, 0, Math.max(frac, 0.004))}" fill="none" stroke="${color}" stroke-width="19" stroke-linecap="round"/>
+            <svg viewBox="0 0 220 128" role="img" aria-label="${esc(title)} ${esc(elapsedLabel)}">
+              <path d="${ZONE_PATH}" fill="none" stroke="${COLORS.green}" stroke-width="4" stroke-dasharray="${zoneGreen.dasharray}" stroke-dashoffset="${zoneGreen.dashoffset}"/>
+              <path d="${ZONE_PATH}" fill="none" stroke="${COLORS.yellow}" stroke-width="4" stroke-dasharray="${zoneYellow.dasharray}" stroke-dashoffset="${zoneYellow.dashoffset}"/>
+              <path d="${ZONE_PATH}" fill="none" stroke="${COLORS.red}" stroke-width="4" stroke-dasharray="${zoneRed.dasharray}" stroke-dashoffset="${zoneRed.dashoffset}"/>
+              <path d="${TRACK_PATH}" fill="none" stroke="var(--piyolog-track, rgba(127,127,127,0.25))" stroke-width="13" stroke-linecap="round"/>
+              <path d="${TRACK_PATH}" fill="none" stroke="${color}" stroke-width="13" stroke-linecap="round" stroke-dasharray="${progress.dasharray}" stroke-dashoffset="${progress.dashoffset}"/>
+              <text x="110" y="102" text-anchor="middle" font-size="23" font-weight="600" fill="${color}">${esc(elapsedLabel)}</text>
             </svg>
-            <div class="value" style="color: ${color}">${esc(elapsedLabel)}</div>
           </div>
           <div class="detail">最後: ${esc(latest.label)} ${esc(this._formatTime(latest.time))}</div>`;
       }
@@ -273,13 +282,8 @@ class PiyologElapsedCard extends HTMLElement {
       <style>
         :host { display: block; }
         .title { padding: 14px 16px 0; font-size: 17px; font-weight: 600; color: var(--primary-text-color); }
-        .gauge { position: relative; padding: 4px 10px 0; }
+        .gauge { padding: 4px 12px 0; }
         .gauge svg { display: block; width: 100%; height: auto; }
-        .value {
-          position: absolute; left: 50%; bottom: 0; transform: translateX(-50%);
-          font-size: 27px; font-weight: 600; font-variant-numeric: tabular-nums;
-          white-space: nowrap; line-height: 1.1;
-        }
         .detail { text-align: center; color: var(--secondary-text-color); font-size: 12px; padding: 2px 8px 12px; }
         .message { padding: 30px 16px 36px; text-align: center; color: var(--secondary-text-color); line-height: 1.6; }
       </style>

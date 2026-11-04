@@ -39,6 +39,11 @@ def test_elapsed_card_is_bundled_and_registered() -> None:
         'customElements.define("piyolog-elapsed-card"',
     ):
         assert token in js
+    # The gauge is drawn with dasharray segments and an SVG <text> value
+    # so it scales cleanly to any card width (responsive layout).
+    assert "stroke-dasharray" in js
+    assert "<text" in js
+    assert "gaugeArc" not in js
 
 
 def test_timeline_card_still_bundled() -> None:
