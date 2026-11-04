@@ -11,7 +11,7 @@ from homeassistant.core import HomeAssistant
 
 from .const import CONF_SCAN_INTERVAL, DEFAULT_SCAN_INTERVAL_MINUTES, DOMAIN
 from .coordinator import PiyologCoordinator
-from .frontend import async_register_frontend
+from .frontend import async_register_frontend, async_register_lovelace_resources
 from .websocket_api import async_register_websocket_commands
 
 PLATFORMS: list[Platform] = [Platform.SENSOR, Platform.BINARY_SENSOR]
@@ -46,6 +46,7 @@ async def _async_global_setup(hass: HomeAssistant) -> None:
         await async_register_frontend(hass)
     except Exception:  # noqa: BLE001 - the card is optional, sensors are not
         _LOGGER.exception("Failed to register the PiyoLog Lovelace card")
+    await async_register_lovelace_resources(hass)
 
 
 async def _async_update_listener(hass: HomeAssistant, entry: PiyologConfigEntry) -> None:

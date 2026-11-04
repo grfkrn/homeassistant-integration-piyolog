@@ -8,7 +8,7 @@
 A Home Assistant custom integration for the official **PiyoLog data feed** (schema v1, read-only).
 It exposes feed records as entities, imports past records into long-term statistics, and bundles a Lovelace timeline card. The detailed feed-field and entity mapping tables in this README are written in Japanese; entity IDs and feed type names are language-neutral.
 
-- バージョン: 1.6.1
+- バージョン: 1.7.0
 - ドメイン: `piyolog`
 - 方式: `cloud_polling`（Home Assistant からフィードを定期取得）
 - 追加の Python 依存: なし
@@ -446,6 +446,8 @@ It exposes feed records as entities, imports past records into long-term statist
 
 統合には専用カード `custom:piyolog-card` が同梱されています。セットアップ時に自動で登録されるため、Lovelace リソースの手動追加は不要です。ダッシュボードのカード選択画面では「PiyoLog Timeline」として表示されます。
 
+カードJSの登録は2経路で行われます。`add_extra_js_url`（フロントの土台ページへの埋め込み）と、Lovelace リソースへの自動登録（ストレージモード時のみ。HACS カードと同じ読み込み経路）です。土台ページはコンパニオンアプリ等が古い内容を使い続けることがあり、その場合は再起動後に「Custom element doesn't exist」と表示されますが、リソース経由の読み込みが併用されるため通常はそのまま表示されます。リソース一覧には `/piyolog_static/…?v=<版数>` の2件が自動で追加・更新されます（YAML モードでは追加されません）。
+
 ```yaml
 type: custom:piyolog-card
 entity: sensor.piyolog_timeline
@@ -567,7 +569,7 @@ custom_components/piyolog/
   binary_sensor.py     睡眠中 binary_sensor
   statistics.py        身体計測と日次合計の長期統計インポート
   websocket_api.py     piyolog/get_records（カード向け日別取得API）
-  frontend.py          同梱カード用JSの配信と Lovelace への登録
+  frontend.py          同梱カード用JSの配信、extra JS URL 登録、Lovelace リソース自動登録
   frontend/
     piyolog-card.js          PiyoLog Timeline カード
     piyolog-elapsed-card.js  経過時間ゲージカード（エディタ付き）
