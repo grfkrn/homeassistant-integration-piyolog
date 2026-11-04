@@ -396,6 +396,6 @@ if (!window.customCards.some((c) => c.type === "piyolog-elapsed-card")) {
     name: "PiyoLog Elapsed Gauge",
     description:
       "Elapsed time since the last diaper change or feeding, with configurable green/yellow/red thresholds.",
-    preview: false,
+    preview: true,
   });
 }

@@ -21,6 +21,8 @@ def test_elapsed_card_is_bundled_and_registered() -> None:
     assert "piyolog-elapsed-card.js" in frontend_py
 
     js = (FRONTEND_DIR / "piyolog-elapsed-card.js").read_text(encoding="utf-8")
+    # The card picker shows a live preview of the gauge.
+    assert "preview: true" in js
     # The gauge must read the last-event sensors of both groups.
     for key in (
         "last_pee",
@@ -50,6 +52,8 @@ def test_elapsed_card_is_bundled_and_registered() -> None:
 
 def test_timeline_card_still_bundled() -> None:
     js = (FRONTEND_DIR / "piyolog-timeline-card.js").read_text(encoding="utf-8")
+    # The card picker shows a live preview built from getStubConfig.
+    assert "preview: true" in js
     assert 'customElements.define("piyolog-card"' in js
     # Regression: the first hass assignment must fetch. setConfig runs
     # before hass exists, so skipping the first sighting left the card

@@ -317,6 +317,6 @@ if (!window.customCards.some((c) => c.type === "piyolog-card")) {
     type: "piyolog-card",
     name: "PiyoLog Timeline",
     description: "One day of PiyoLog records (feed times and values as-is).",
-    preview: false,
+    preview: true,
   });
 }
