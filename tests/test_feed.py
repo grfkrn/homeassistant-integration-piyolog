@@ -113,6 +113,23 @@ def test_breast_feeding_duration():
     assert data.today_breast_feeding_duration_seconds == 300 + 240
 
 
+def test_breast_feeding_ml_total():
+    # BreastFeeding records may carry a measured amount (ml); records
+    # without a value are counted as sessions but add nothing to the total.
+    records = [
+        rec("bf1", "2026-09-09T07:00:00.000Z", "BreastFeeding",
+            leftTime=300, value={"value": 100, "unit": "ml"}),
+        rec("bf2", "2026-09-09T09:00:00.000Z", "BreastFeeding",
+            rightTime=240, value={"value": 50, "unit": "ml"}),
+        rec("bf3", "2026-09-09T11:00:00.000Z", "BreastFeeding", leftTime=60),
+    ]
+    data = _aggregate(records)
+    assert data.today_count("BreastFeeding") == 3
+    assert data.today_breast_feeding_ml == 150
+    assert data.today_breast_feeding_measured_count == 2
+    assert data.today_breast_feeding_duration_seconds == 300 + 240 + 60
+
+
 def test_sleep_pairing_and_today_total():
     data = _aggregate()
     # 22:00 -> 02:00 contributes 2h to today; open sleep from 10:00 adds 2h.

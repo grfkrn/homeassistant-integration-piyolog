@@ -130,6 +130,9 @@
       "today_breast_feeding_duration": {
         "name": "今日の授乳時間"
       },
+      "today_breast_feeding_total": {
+        "name": "今日の母乳量"
+      },
       "today_formula_total": {
         "name": "今日のミルク量"
       },

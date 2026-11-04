@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.2.0 (2026-11-04)
+
+- `sensor.piyolog_today_breast_feeding_total`（今日の母乳量）を追加：母乳レコードに記録された ml の当日合計。属性に `measured_count`（ml記録のある回数）と `count_today`（授乳回数）。ml未記録の回は合計に含めない
+
 ## 1.1.1 (2026-11-04)
 
 - うんち系センサー（`piyolog_last_poop` / `piyolog_today_poop_count`）のアイコンが表示されない問題を修正：存在しない `mdi:emoticon-poo` を正しい `mdi:emoticon-poop` に変更

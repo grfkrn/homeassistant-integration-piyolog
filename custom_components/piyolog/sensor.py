@@ -366,6 +366,15 @@ TODAY_SENSORS: list[PiyologSensorDescription] = [
         value_fn=lambda d: round(d.today_breast_feeding_duration_seconds / 60, 1),
     ),
     PiyologSensorDescription(
+        key="today_breast_feeding_total",
+        translation_key="today_breast_feeding_total",
+        icon="mdi:mother-nurse",
+        device_class=SensorDeviceClass.VOLUME,
+        native_unit_of_measurement=UnitOfVolume.MILLILITERS,
+        state_class=SensorStateClass.TOTAL,
+        value_fn=lambda d: d.today_breast_feeding_ml,
+    ),
+    PiyologSensorDescription(
         key="today_formula_total",
         translation_key="today_formula_total",
         icon="mdi:baby-bottle-outline",
@@ -450,6 +459,12 @@ class PiyologTodaySensor(PiyologEntity, SensorEntity):
     def extra_state_attributes(self) -> dict[str, Any] | None:
         if self._key == "today_formula_total":
             return {"count_today": self.coordinator.data.today_count(TYPE_FORMULA)}
+        if self._key == "today_breast_feeding_total":
+            data = self.coordinator.data
+            return {
+                "count_today": data.today_count(TYPE_BREAST_FEEDING),
+                "measured_count": data.today_breast_feeding_measured_count,
+            }
         return None
 
 

@@ -130,6 +130,9 @@
       "today_breast_feeding_duration": {
         "name": "Breastfeeding time today"
       },
+      "today_breast_feeding_total": {
+        "name": "Breast milk today"
+      },
       "today_formula_total": {
         "name": "Formula today"
       },

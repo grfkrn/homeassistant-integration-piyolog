@@ -240,6 +240,8 @@ class AggregatedData:
     last_by_type: dict[str, Record] = field(default_factory=dict)
     today_counts: dict[str, int] = field(default_factory=dict)
     today_breast_feeding_duration_seconds: int = 0
+    today_breast_feeding_ml: float = 0.0
+    today_breast_feeding_measured_count: int = 0
     today_formula_ml: float = 0.0
     today_expressed_ml: float = 0.0
     today_pumping_ml: float = 0.0
@@ -292,6 +294,10 @@ def aggregate(
             if isinstance(right, (int, float)):
                 total += int(right)
             data.today_breast_feeding_duration_seconds += total
+            # BreastFeeding records can carry a measured amount (ml).
+            if num is not None:
+                data.today_breast_feeding_ml += num
+                data.today_breast_feeding_measured_count += 1
         elif record.type == TYPE_FORMULA and num is not None:
             data.today_formula_ml += num
         elif record.type == TYPE_EXPRESSED_BREAST_MILK and num is not None:
