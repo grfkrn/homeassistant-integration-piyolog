@@ -104,14 +104,17 @@ class PiyologCard extends HTMLElement {
     if (this._date === null) {
       this._date = this._today();
     }
-    // Refetch when the anchor entity updates (a feed refresh happened).
+    // Fetch on the anchor entity's first sighting as well as on later
+    // changes (a feed refresh happened). setConfig usually runs before
+    // hass exists, so the fetch it triggers is a no-op; skipping the
+    // first sighting here left the card stuck on "loading" until the
+    // user changed the date once.
     const state = this._config?.entity
       ? hass.states[this._config.entity]?.state
       : null;
-    if (state !== undefined && state !== this._lastAnchorState) {
-      const first = this._lastAnchorState === null;
+    if (state != null && state !== this._lastAnchorState) {
       this._lastAnchorState = state;
-      if (!first) this._fetch();
+      this._fetch();
     }
   }
 

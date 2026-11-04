@@ -49,6 +49,11 @@ def test_elapsed_card_is_bundled_and_registered() -> None:
 def test_timeline_card_still_bundled() -> None:
     js = (FRONTEND_DIR / "piyolog-card.js").read_text(encoding="utf-8")
     assert 'customElements.define("piyolog-card"' in js
+    # Regression: the first hass assignment must fetch. setConfig runs
+    # before hass exists, so skipping the first sighting left the card
+    # stuck on the loading message until the date was changed once.
+    assert "if (!first)" not in js
+    assert "first sighting" in js
 
 
 def test_resource_registration_ships() -> None:
