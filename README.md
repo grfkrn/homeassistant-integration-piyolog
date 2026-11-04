@@ -8,7 +8,7 @@
 A Home Assistant custom integration for the official **PiyoLog data feed** (schema v1, read-only).
 It exposes feed records as entities, imports past records into long-term statistics, and bundles a Lovelace timeline card. The detailed feed-field and entity mapping tables in this README are written in Japanese; entity IDs and feed type names are language-neutral.
 
-- バージョン: 1.7.2
+- バージョン: 1.7.3
 - ドメイン: `piyolog`
 - 方式: `cloud_polling`（Home Assistant からフィードを定期取得）
 - 追加の Python 依存: なし
@@ -493,9 +493,9 @@ entity: sensor.piyolog_timeline
 | `mode` | `diaper`（うんち／おしっこ）または `feeding`（搾母乳／母乳／ミルク） | `diaper` | — |
 | `entity` | 対象のお子様を特定するアンカー。ここから同じ接頭辞の最終記録センサーを参照します | `sensor.piyolog_timeline` | 同左 |
 | `title` | カードのタイトル | うんち経過時間 | ミルク経過時間 |
-| `yellow_after_hours` | 緑→黄の切替わり（時間） | 6 | 3 |
-| `red_after_hours` | 黄→赤の切替わり（時間） | 12 | 3.5 |
-| `max_hours` | ゲージの最大値（時間）。経過時間がこれを超えても数値は増え続け、ゲージだけが最大で止まります | 24 | 4 |
+| `yellow_after_hours` | 緑→黄の切替わり（時間） | 2.5 | 2.5 |
+| `red_after_hours` | 黄→赤の切替わり（時間） | 3 | 3 |
+| `max_hours` | ゲージの最大値（時間）。経過時間がこれを超えても数値は増え続け、ゲージだけが最大で止まります | 5 | 5 |
 | `entities` | （任意）参照する最終記録センサーを直接並べる場合に使います。通常は不要です | — | — |
 
 計測対象は次の最終記録センサーです。グループ内で最も新しい記録の `datetime` から現在時刻までの経過を「1時間45分」形式で表示し、最後に使われた記録の種類と時刻も小さく表示します。

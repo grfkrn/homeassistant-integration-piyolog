@@ -16,9 +16,9 @@
  *   type: custom:piyolog-elapsed-card
  *   mode: diaper            # or feeding
  *   entity: sensor.piyolog_timeline   # anchor (optional)
- *   yellow_after_hours: 6   # green -> yellow
- *   red_after_hours: 12     # yellow -> red
- *   max_hours: 24           # gauge full scale
+ *   yellow_after_hours: 2.5 # green -> yellow
+ *   red_after_hours: 3      # yellow -> red
+ *   max_hours: 5            # gauge full scale
  *
  * Plain ES module, no build step (same style as piyolog-card.js).
  */
@@ -26,9 +26,9 @@
 const MODE_DEFS = {
   diaper: {
     title: "うんち経過時間",
-    yellow: 6,
-    red: 12,
-    max: 24,
+    yellow: 2.5,
+    red: 3,
+    max: 5,
     sources: [
       { key: "last_poop", label: "うんち" },
       { key: "last_pee", label: "おしっこ" },
@@ -36,9 +36,9 @@ const MODE_DEFS = {
   },
   feeding: {
     title: "ミルク経過時間",
-    yellow: 3,
-    red: 3.5,
-    max: 4,
+    yellow: 2.5,
+    red: 3,
+    max: 5,
     sources: [
       { key: "last_expressed_breast_milk", label: "搾母乳" },
       { key: "last_breast_feeding", label: "母乳" },
