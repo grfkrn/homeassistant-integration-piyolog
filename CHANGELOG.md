@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.6.0 (2026-11-04)
+
+- 経過時間ゲージカード `custom:piyolog-elapsed-card` を同梱：最後の記録からの経過時間を半円ゲージで表示し、しきい値で緑→黄→赤に色が変わる。ビジュアルエディタ対応
+  - `mode: diaper`：うんち（Poop）／おしっこ（Pee）のうち新しい方から計測（既定の切替わり 6時間 / 12時間、最大 24時間）
+  - `mode: feeding`：搾母乳（ExpressedBreastMilk）／母乳（BreastFeeding）／ミルク（Formula）のうち新しい方から計測（既定の切替わり 3時間 / 3.5時間、最大 4時間）
+  - 切替わり時間とゲージの最大値は `yellow_after_hours` / `red_after_hours` / `max_hours` でカードごとに設定可能
+
 ## 1.5.0 (2026-11-04)
 
 - 専用 Lovelace カード `custom:piyolog-card` を同梱：1日分の記録をフィードの時刻・値そのままでタイムライン表示（日付ナビ、その日のサマリー、起床記録への睡眠時間表示）。セットアップ時に自動登録される

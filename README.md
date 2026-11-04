@@ -8,7 +8,7 @@
 A Home Assistant custom integration for the official **PiyoLog data feed** (schema v1, read-only).
 It exposes feed records as entities, imports past records into long-term statistics, and bundles a Lovelace timeline card. The detailed feed-field and entity mapping tables in this README are written in Japanese; entity IDs and feed type names are language-neutral.
 
-- バージョン: 1.5.0
+- バージョン: 1.6.0
 - ドメイン: `piyolog`
 - 方式: `cloud_polling`（Home Assistant からフィードを定期取得）
 - 追加の Python 依存: なし
@@ -29,6 +29,7 @@ It exposes feed records as entities, imports past records into long-term statist
 
 - フィードの過去記録を Home Assistant の長期統計へインポートする（常時有効）
 - 同梱カード `custom:piyolog-card` と WebSocket API `piyolog/get_records` で、指定した1日分の記録をフィードの時刻・値で表示する
+- 同梱カード `custom:piyolog-elapsed-card` で、最後のおむつ交換・授乳からの経過時間を、しきい値で色が変わるゲージで表示する
 - メインフィードと長期間フィードの2本が設定された場合は、`event_id` 単位でマージしてから集計する
 - フィードが繰り返し404を返す場合は、失効・期限切れの可能性として修復通知を表示する
 
@@ -467,6 +468,41 @@ entity: sensor.piyolog_timeline
 - 対象センサーの状態が変わると再取得します
 - 遡れる範囲は、取得済みフィードの範囲までです（最大28日）
 
+### 経過時間ゲージカード `custom:piyolog-elapsed-card`
+
+最後の記録からどれだけ時間が経ったかを、半円ゲージで表示するカードも同梱されています。タイムラインカードと同じく自動登録され、ビジュアルエディタにも対応しています。ゲージは30秒ごとに再計算されるため、記録が無くても経過時間が進みます。
+
+```yaml
+# うんち経過時間（うんち／おしっこのうち新しい方から計測）
+type: custom:piyolog-elapsed-card
+mode: diaper
+entity: sensor.piyolog_timeline
+```
+
+```yaml
+# ミルク経過時間（搾母乳／母乳／ミルクのうち新しい方から計測）
+type: custom:piyolog-elapsed-card
+mode: feeding
+entity: sensor.piyolog_timeline
+```
+
+| 設定 | 意味 | 既定値（diaper） | 既定値（feeding） |
+|---|---|---:|---:|
+| `mode` | `diaper`（うんち／おしっこ）または `feeding`（搾母乳／母乳／ミルク） | `diaper` | — |
+| `entity` | 対象のお子様を特定するアンカー。ここから同じ接頭辞の最終記録センサーを参照します | `sensor.piyolog_timeline` | 同左 |
+| `title` | カードのタイトル | うんち経過時間 | ミルク経過時間 |
+| `yellow_after_hours` | 緑→黄の切替わり（時間） | 6 | 3 |
+| `red_after_hours` | 黄→赤の切替わり（時間） | 12 | 3.5 |
+| `max_hours` | ゲージの最大値（時間）。経過時間がこれを超えても数値は増え続け、ゲージだけが最大で止まります | 24 | 4 |
+| `entities` | （任意）参照する最終記録センサーを直接並べる場合に使います。通常は不要です | — | — |
+
+計測対象は次の最終記録センサーです。グループ内で最も新しい記録の `datetime` から現在時刻までの経過を、小数第2位までの時間（`hour`）で表示し、最後に使われた記録の種類と時刻も小さく表示します。
+
+- diaper: `sensor.piyolog_last_poop`（うんち）、`sensor.piyolog_last_pee`（おしっこ）
+- feeding: `sensor.piyolog_last_expressed_breast_milk`（搾母乳）、`sensor.piyolog_last_breast_feeding`（母乳）、`sensor.piyolog_last_formula`（ミルク）。搾乳（Pumping）は授乳ではないため対象に含めません
+
+しきい値は「黄色 ＜ 赤 ＜ 最大」の順になっている必要があります。順序が不正な場合は、カードに設定確認のメッセージが表示されます。対象の記録が1件も無い場合は「記録がありません」と表示されます。
+
 ### WebSocket API `piyolog/get_records`
 
 カードは、センサー属性ではなく WebSocket API から日別の記録を取得します。これにより、28日分すべてをセンサー属性へ載せる必要がありません。
@@ -533,7 +569,8 @@ custom_components/piyolog/
   websocket_api.py     piyolog/get_records（カード向け日別取得API）
   frontend.py          同梱カード用JSの配信と Lovelace への登録
   frontend/
-    piyolog-card.js    PiyoLog Timeline カード
+    piyolog-card.js          PiyoLog Timeline カード
+    piyolog-elapsed-card.js  経過時間ゲージカード（エディタ付き）
   diagnostics.py       診断情報（フィードURLはマスク）
   brand/               ぴよログのロゴ
   strings.json         設定画面の文言（英語）
@@ -543,6 +580,7 @@ tests/
   test_config_flow.py  設定画面のテスト
   test_init.py         統合セットアップのテスト
   test_websocket.py    WebSocket API のテスト
+  test_frontend.py     同梱カードの同梱・登録チェック
 ```
 
 ## テスト
@@ -552,7 +590,7 @@ python -m pip install -r requirements_test.txt
 python -m pytest tests/
 ```
 
-Home Assistant 2026.2.3 / pytest-homeassistant-custom-component 0.13.316 の開発環境で、31件全件の合格を確認しています。テストデータはすべて架空のフィクスチャで、実フィードや実記録は含みません。
+Home Assistant 2026.2.3 / pytest-homeassistant-custom-component 0.13.316 の開発環境で、33件全件の合格を確認しています。テストデータはすべて架空のフィクスチャで、実フィードや実記録は含みません。
 
 ## 注意事項
 

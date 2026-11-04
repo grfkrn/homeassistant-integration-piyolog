@@ -1,9 +1,10 @@
-"""Serve and register the bundled Lovelace card.
+"""Serve and register the bundled Lovelace cards.
 
 The card JavaScript lives in ``frontend/`` next to this module. It is
 served under ``/piyolog_static/`` and loaded on every frontend page via
-``add_extra_js_url`` so ``custom:piyolog-card`` is available in the
-card picker without any manual resource registration.
+``add_extra_js_url`` so ``custom:piyolog-card`` and
+``custom:piyolog-elapsed-card`` are available in the card picker
+without any manual resource registration.
 """
 
 from __future__ import annotations
@@ -22,6 +23,7 @@ _LOGGER = logging.getLogger(__name__)
 
 URL_BASE = "/piyolog_static"
 CARD_FILENAME = "piyolog-card.js"
+ELAPSED_CARD_FILENAME = "piyolog-elapsed-card.js"
 
 
 async def async_register_frontend(hass: HomeAssistant) -> None:
@@ -36,4 +38,5 @@ async def async_register_frontend(hass: HomeAssistant) -> None:
         [StaticPathConfig(URL_BASE, frontend_dir, cache_headers=False)]
     )
     add_extra_js_url(hass, f"{URL_BASE}/{CARD_FILENAME}?v={version}")
-    _LOGGER.debug("Registered PiyoLog Lovelace card (version %s)", version)
+    add_extra_js_url(hass, f"{URL_BASE}/{ELAPSED_CARD_FILENAME}?v={version}")
+    _LOGGER.debug("Registered PiyoLog Lovelace cards (version %s)", version)
