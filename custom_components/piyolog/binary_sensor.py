@@ -21,7 +21,7 @@ class PiyologSleepingSensor(PiyologEntity, BinarySensorEntity):
     def __init__(
         self, coordinator: PiyologCoordinator, entry: PiyologConfigEntry
     ) -> None:
-        super().__init__(coordinator, entry, "sleeping")
+        super().__init__(coordinator, entry, "sleeping", platform_domain="binary_sensor")
 
     @property
     def is_on(self) -> bool:

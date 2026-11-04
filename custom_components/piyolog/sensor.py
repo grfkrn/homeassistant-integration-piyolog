@@ -79,12 +79,14 @@ class PiyologEntity(CoordinatorEntity[PiyologCoordinator]):
         coordinator: PiyologCoordinator,
         entry: PiyologConfigEntry,
         key: str,
+        platform_domain: str = "sensor",
     ) -> None:
         super().__init__(coordinator)
         self._entry = entry
         self._key = key
         self._attr_unique_id = f"{entry.entry_id}_{key}"
-        self._attr_suggested_object_id = f"piyolog_{key}"
+        # Force entity ids to piyolog_* regardless of the device label.
+        self.entity_id = f"{platform_domain}.piyolog_{key}"
         self._attr_device_info = {
             "identifiers": {("piyolog", entry.entry_id)},
             "name": entry.data.get(CONF_NAME) or "PiyoLog",
@@ -236,7 +238,7 @@ BODY_SENSORS: list[PiyologSensorDescription] = [
     PiyologSensorDescription(
         key="height",
         translation_key="height",
-        device_class=SensorDeviceClass.LENGTH,
+        device_class=SensorDeviceClass.DISTANCE,
         state_class=SensorStateClass.MEASUREMENT,
         native_unit_of_measurement=UnitOfLength.CENTIMETERS,
         value_fn=lambda d: (r.numeric_value() if (r := d.last(TYPE_HEIGHT)) else None),
@@ -254,7 +256,7 @@ BODY_SENSORS: list[PiyologSensorDescription] = [
     PiyologSensorDescription(
         key="head_circumference",
         translation_key="head_circumference",
-        device_class=SensorDeviceClass.LENGTH,
+        device_class=SensorDeviceClass.DISTANCE,
         state_class=SensorStateClass.MEASUREMENT,
         native_unit_of_measurement=UnitOfLength.CENTIMETERS,
         value_fn=lambda d: (r.numeric_value() if (r := d.last(TYPE_HEAD)) else None),
@@ -262,7 +264,7 @@ BODY_SENSORS: list[PiyologSensorDescription] = [
     PiyologSensorDescription(
         key="chest_circumference",
         translation_key="chest_circumference",
-        device_class=SensorDeviceClass.LENGTH,
+        device_class=SensorDeviceClass.DISTANCE,
         state_class=SensorStateClass.MEASUREMENT,
         native_unit_of_measurement=UnitOfLength.CENTIMETERS,
         value_fn=lambda d: (r.numeric_value() if (r := d.last(TYPE_CHEST)) else None),
@@ -308,7 +310,7 @@ class PiyologBodySensor(PiyologEntity, SensorEntity):
 class PiyologFootSizeSensor(PiyologEntity, SensorEntity):
     """Latest foot size; state is the left value when both sides exist."""
 
-    _attr_device_class = SensorDeviceClass.LENGTH
+    _attr_device_class = SensorDeviceClass.DISTANCE
     _attr_state_class = SensorStateClass.MEASUREMENT
     _attr_native_unit_of_measurement = UnitOfLength.CENTIMETERS
     _attr_translation_key = "foot_size"
@@ -369,7 +371,7 @@ TODAY_SENSORS: list[PiyologSensorDescription] = [
         icon="mdi:baby-bottle-outline",
         device_class=SensorDeviceClass.VOLUME,
         native_unit_of_measurement=UnitOfVolume.MILLILITERS,
-        state_class=SensorStateClass.MEASUREMENT,
+        state_class=SensorStateClass.TOTAL,
         value_fn=lambda d: d.today_formula_ml,
     ),
     PiyologSensorDescription(
@@ -378,7 +380,7 @@ TODAY_SENSORS: list[PiyologSensorDescription] = [
         icon="mdi:beaker-outline",
         device_class=SensorDeviceClass.VOLUME,
         native_unit_of_measurement=UnitOfVolume.MILLILITERS,
-        state_class=SensorStateClass.MEASUREMENT,
+        state_class=SensorStateClass.TOTAL,
         value_fn=lambda d: d.today_expressed_ml,
     ),
     PiyologSensorDescription(
@@ -387,7 +389,7 @@ TODAY_SENSORS: list[PiyologSensorDescription] = [
         icon="mdi:beaker-plus-outline",
         device_class=SensorDeviceClass.VOLUME,
         native_unit_of_measurement=UnitOfVolume.MILLILITERS,
-        state_class=SensorStateClass.MEASUREMENT,
+        state_class=SensorStateClass.TOTAL,
         value_fn=lambda d: d.today_pumping_ml,
     ),
     PiyologSensorDescription(
@@ -396,7 +398,7 @@ TODAY_SENSORS: list[PiyologSensorDescription] = [
         icon="mdi:cup-water",
         device_class=SensorDeviceClass.VOLUME,
         native_unit_of_measurement=UnitOfVolume.MILLILITERS,
-        state_class=SensorStateClass.MEASUREMENT,
+        state_class=SensorStateClass.TOTAL,
         value_fn=lambda d: d.today_drink_ml,
     ),
     PiyologSensorDescription(
