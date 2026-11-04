@@ -240,6 +240,8 @@ class PiyologElapsedCard extends HTMLElement {
         body = `<div class="message">記録がありません</div>`;
       } else {
         const elapsedHours = Math.max(0, (Date.now() - latest.time) / 3600000);
+        const totalMinutes = Math.floor(elapsedHours * 60);
+        const elapsedLabel = `${Math.floor(totalMinutes / 60)}時間${String(totalMinutes % 60).padStart(2, "0")}分`;
         const colorName =
           elapsedHours >= thresholds.red
             ? "red"
@@ -254,14 +256,14 @@ class PiyologElapsedCard extends HTMLElement {
         const cy = 112;
         body = `
           <div class="gauge">
-            <svg viewBox="0 0 220 124" role="img" aria-label="${esc(title)} ${elapsedHours.toFixed(2)} hour">
+            <svg viewBox="0 0 220 124" role="img" aria-label="${esc(title)} ${esc(elapsedLabel)}">
               <path d="${gaugeArc(cx, cy, 80, 0, 1)}" fill="none" stroke="var(--piyolog-track, rgba(127,127,127,0.25))" stroke-width="19" stroke-linecap="round"/>
               <path d="${gaugeArc(cx, cy, 96, 0, yFrac)}" fill="none" stroke="${COLORS.green}" stroke-width="4" stroke-linecap="round"/>
               <path d="${gaugeArc(cx, cy, 96, yFrac, rFrac)}" fill="none" stroke="${COLORS.yellow}" stroke-width="4" stroke-linecap="round"/>
               <path d="${gaugeArc(cx, cy, 96, rFrac, 1)}" fill="none" stroke="${COLORS.red}" stroke-width="4" stroke-linecap="round"/>
               <path d="${gaugeArc(cx, cy, 80, 0, Math.max(frac, 0.004))}" fill="none" stroke="${color}" stroke-width="19" stroke-linecap="round"/>
             </svg>
-            <div class="value" style="color: ${color}">${elapsedHours.toFixed(2)} <span class="unit">hour</span></div>
+            <div class="value" style="color: ${color}">${esc(elapsedLabel)}</div>
           </div>
           <div class="detail">最後: ${esc(latest.label)} ${esc(this._formatTime(latest.time))}</div>`;
       }
@@ -275,10 +277,9 @@ class PiyologElapsedCard extends HTMLElement {
         .gauge svg { display: block; width: 100%; height: auto; }
         .value {
           position: absolute; left: 50%; bottom: 0; transform: translateX(-50%);
-          font-size: 30px; font-weight: 600; font-variant-numeric: tabular-nums;
+          font-size: 27px; font-weight: 600; font-variant-numeric: tabular-nums;
           white-space: nowrap; line-height: 1.1;
         }
-        .value .unit { font-size: 19px; font-weight: 500; }
         .detail { text-align: center; color: var(--secondary-text-color); font-size: 12px; padding: 2px 8px 12px; }
         .message { padding: 30px 16px 36px; text-align: center; color: var(--secondary-text-color); line-height: 1.6; }
       </style>
