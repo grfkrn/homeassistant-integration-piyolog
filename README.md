@@ -8,7 +8,7 @@
 A Home Assistant custom integration for the official **PiyoLog data feed** (schema v1, read-only).
 It exposes feed records as entities, imports past records into long-term statistics, and bundles a Lovelace timeline card. The detailed feed-field and entity mapping tables in this README are written in Japanese; entity IDs and feed type names are language-neutral.
 
-- バージョン: 1.7.3
+- バージョン: 1.7.4
 - ドメイン: `piyolog`
 - 方式: `cloud_polling`（Home Assistant からフィードを定期取得）
 - 追加の Python 依存: なし
@@ -475,7 +475,7 @@ entity: sensor.piyolog_timeline
 最後の記録からどれだけ時間が経ったかを、半円ゲージで表示するカードも同梱されています。タイムラインカードと同じく自動登録され、ビジュアルエディタにも対応しています。ゲージは30秒ごとに再計算されるため、記録が無くても経過時間が進みます。
 
 ```yaml
-# うんち経過時間（うんち／おしっこのうち新しい方から計測）
+# おむつ経過時間（うんち／おしっこのうち新しい方から計測）
 type: custom:piyolog-elapsed-card
 mode: diaper
 entity: sensor.piyolog_timeline
@@ -492,7 +492,7 @@ entity: sensor.piyolog_timeline
 |---|---|---:|---:|
 | `mode` | `diaper`（うんち／おしっこ）または `feeding`（搾母乳／母乳／ミルク） | `diaper` | — |
 | `entity` | 対象のお子様を特定するアンカー。ここから同じ接頭辞の最終記録センサーを参照します | `sensor.piyolog_timeline` | 同左 |
-| `title` | カードのタイトル | うんち経過時間 | ミルク経過時間 |
+| `title` | カードのタイトル | おむつ経過時間 | ミルク経過時間 |
 | `yellow_after_hours` | 緑→黄の切替わり（時間） | 2.5 | 2.5 |
 | `red_after_hours` | 黄→赤の切替わり（時間） | 3 | 3 |
 | `max_hours` | ゲージの最大値（時間）。経過時間がこれを超えても数値は増え続け、ゲージだけが最大で止まります | 5 | 5 |
@@ -571,7 +571,7 @@ custom_components/piyolog/
   websocket_api.py     piyolog/get_records（カード向け日別取得API）
   frontend.py          同梱カード用JSの配信、extra JS URL 登録、Lovelace リソース自動登録
   frontend/
-    piyolog-card.js          PiyoLog Timeline カード
+    piyolog-timeline-card.js PiyoLog Timeline カード
     piyolog-elapsed-card.js  経過時間ゲージカード（エディタ付き）
   diagnostics.py       診断情報（フィードURLはマスク）
   brand/               ぴよログのロゴ

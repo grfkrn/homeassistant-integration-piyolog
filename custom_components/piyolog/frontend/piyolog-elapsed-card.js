@@ -25,7 +25,7 @@
 
 const MODE_DEFS = {
   diaper: {
-    title: "うんち経過時間",
+    title: "おむつ経過時間",
     yellow: 2.5,
     red: 3,
     max: 5,
@@ -329,7 +329,7 @@ class PiyologElapsedCardEditor extends HTMLElement {
       </style>
       <label class="row"><span>種類</span>
         <select data-field="mode">
-          <option value="diaper" ${mode === "diaper" ? "selected" : ""}>うんち経過時間（うんち／おしっこ）</option>
+          <option value="diaper" ${mode === "diaper" ? "selected" : ""}>おむつ経過時間（うんち／おしっこ）</option>
           <option value="feeding" ${mode === "feeding" ? "selected" : ""}>ミルク経過時間（搾母乳／母乳／ミルク）</option>
         </select>
       </label>

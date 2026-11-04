@@ -8,6 +8,8 @@ both are registered as extra JS URLs.
 
 from pathlib import Path
 
+from custom_components.piyolog.frontend import async_register_lovelace_resources
+
 ROOT = Path(__file__).resolve().parents[1]
 FRONTEND_DIR = ROOT / "custom_components" / "piyolog" / "frontend"
 
@@ -47,7 +49,7 @@ def test_elapsed_card_is_bundled_and_registered() -> None:
 
 
 def test_timeline_card_still_bundled() -> None:
-    js = (FRONTEND_DIR / "piyolog-card.js").read_text(encoding="utf-8")
+    js = (FRONTEND_DIR / "piyolog-timeline-card.js").read_text(encoding="utf-8")
     assert 'customElements.define("piyolog-card"' in js
     # Regression: the first hass assignment must fetch. setConfig runs
     # before hass exists, so skipping the first sighting left the card
@@ -74,6 +76,7 @@ class _FakeResources:
         self.items: list[dict] = []
         self.created: list[dict] = []
         self.updated: list[tuple[str, dict]] = []
+        self.deleted: list[str] = []
 
     def async_items(self) -> list[dict]:
         return list(self.items)
@@ -97,14 +100,16 @@ class _FakeResources:
             if item["id"] == item_id:
                 item.update(updates)
 
+    async def async_delete_item(self, item_id: str) -> None:
+        self.deleted.append(item_id)
+        self.items = [item for item in self.items if item["id"] != item_id]
+
 
 async def test_lovelace_resources_created_updated_idempotent(hass, monkeypatch) -> None:
     import json
     from types import SimpleNamespace
 
     import homeassistant.components.lovelace.resources as lovelace_resources
-
-    from custom_components.piyolog.frontend import async_register_lovelace_resources
 
     version = json.loads(
         (ROOT / "custom_components" / "piyolog" / "manifest.json").read_text(
@@ -119,8 +124,8 @@ async def test_lovelace_resources_created_updated_idempotent(hass, monkeypatch) 
 
     await async_register_lovelace_resources(hass)
     assert sorted(item["url"] for item in fake.items) == [
-        f"/piyolog_static/piyolog-card.js?v={version}",
         f"/piyolog_static/piyolog-elapsed-card.js?v={version}",
+        f"/piyolog_static/piyolog-timeline-card.js?v={version}",
     ]
     assert all(item["type"] == "module" for item in fake.items)
 
@@ -130,15 +135,24 @@ async def test_lovelace_resources_created_updated_idempotent(hass, monkeypatch) 
     assert fake.updated == []
 
     # Stale version query: the entry is updated in place, not duplicated.
-    fake.items[0]["url"] = "/piyolog_static/piyolog-card.js?v=0.0.0"
+    elapsed_item = next(
+        item for item in fake.items if "piyolog-elapsed-card" in item["url"]
+    )
+    elapsed_item["url"] = "/piyolog_static/piyolog-elapsed-card.js?v=0.0.0"
     await async_register_lovelace_resources(hass)
     assert len(fake.created) == 2
     assert len(fake.updated) == 1
     assert fake.updated[0][1]["url"].endswith(f"?v={version}")
 
+    # A leftover entry for the pre-rename file name is removed.
+    fake.items.append(
+        {"id": "stale1", "type": "module", "url": "/piyolog_static/piyolog-card.js?v=1.7.3"}
+    )
+    await async_register_lovelace_resources(hass)
+    assert fake.deleted == ["stale1"]
+    assert all("piyolog-card.js" not in item["url"] for item in fake.items)
+
 
 async def test_lovelace_resources_skipped_safely(hass) -> None:
-    from custom_components.piyolog.frontend import async_register_lovelace_resources
-
     hass.data.pop("lovelace", None)
     await async_register_lovelace_resources(hass)  # must not raise

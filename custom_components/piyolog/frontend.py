@@ -22,7 +22,7 @@ from .const import DOMAIN
 _LOGGER = logging.getLogger(__name__)
 
 URL_BASE = "/piyolog_static"
-CARD_FILENAME = "piyolog-card.js"
+CARD_FILENAME = "piyolog-timeline-card.js"
 ELAPSED_CARD_FILENAME = "piyolog-elapsed-card.js"
 CARD_FILENAMES = (CARD_FILENAME, ELAPSED_CARD_FILENAME)
 
@@ -91,5 +91,14 @@ async def async_register_lovelace_resources(hass: HomeAssistant) -> None:
             elif existing.get("url") != url:
                 await resources.async_update_item(existing["id"], {"url": url})
                 _LOGGER.info("Updated Lovelace resource %s", url)
+        # Drop stale entries for this integration's old file names (e.g.
+        # piyolog-card.js, renamed in v1.7.4): a leftover entry makes the
+        # frontend fetch a file that no longer exists on every load.
+        current_paths = {f"{URL_BASE}/{name}" for name in CARD_FILENAMES}
+        for item in items:
+            path = str(item.get("url", "")).split("?")[0]
+            if path.startswith(f"{URL_BASE}/") and path not in current_paths:
+                await resources.async_delete_item(item["id"])
+                _LOGGER.info("Removed stale Lovelace resource %s", item.get("url"))
     except Exception:  # noqa: BLE001 - resources are a fallback path
         _LOGGER.warning("Failed to register PiyoLog Lovelace resources", exc_info=True)
