@@ -1,0 +1,173 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Connect PiyoLog data feed",
+        "description": "Create a data feed in the PiyoLog app (Settings → Data feed) and paste its URL. The URL itself is a secret; it is stored only in Home Assistant.",
+        "data": {
+          "name": "Label (device name)",
+          "feed_url": "Feed URL",
+          "feed_url_long": "Long-period feed URL (optional, e.g. 28d)"
+        }
+      }
+    },
+    "error": {
+      "invalid_url": "This is not a valid PiyoLog feed URL.",
+      "cannot_connect": "Could not fetch the feed. Check the URL and your network.",
+      "feed_unavailable": "The feed is unavailable (expired, revoked, or plan suspended). Create a new feed in the app."
+    },
+    "abort": {
+      "already_configured": "This feed is already configured."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "data": {
+          "scan_interval": "Polling interval for the main feed (minutes)"
+        }
+      }
+    }
+  },
+  "entity": {
+    "sensor": {
+      "last_breast_feeding": {
+        "name": "Last breastfeeding"
+      },
+      "last_formula": {
+        "name": "Last formula"
+      },
+      "last_expressed_breast_milk": {
+        "name": "Last expressed breast milk"
+      },
+      "last_pumping": {
+        "name": "Last pumping"
+      },
+      "last_sleep": {
+        "name": "Last fell asleep"
+      },
+      "last_wake_up": {
+        "name": "Last woke up"
+      },
+      "last_pee": {
+        "name": "Last pee"
+      },
+      "last_poop": {
+        "name": "Last poop"
+      },
+      "last_drink": {
+        "name": "Last drink"
+      },
+      "last_solid": {
+        "name": "Last solid food"
+      },
+      "last_snack": {
+        "name": "Last snack"
+      },
+      "last_meal": {
+        "name": "Last meal"
+      },
+      "last_bath": {
+        "name": "Last bath"
+      },
+      "last_medicine": {
+        "name": "Last medicine"
+      },
+      "last_hospital": {
+        "name": "Last hospital visit"
+      },
+      "last_walking": {
+        "name": "Last walk"
+      },
+      "last_vaccine": {
+        "name": "Last vaccination"
+      },
+      "last_milestone": {
+        "name": "Last milestone"
+      },
+      "last_cough": {
+        "name": "Last cough"
+      },
+      "last_vomiting": {
+        "name": "Last vomiting"
+      },
+      "last_rash": {
+        "name": "Last rash"
+      },
+      "last_injury": {
+        "name": "Last injury"
+      },
+      "last_memo": {
+        "name": "Last memo"
+      },
+      "last_other": {
+        "name": "Last other record"
+      },
+      "last_custom": {
+        "name": "Last custom record"
+      },
+      "weight": {
+        "name": "Weight"
+      },
+      "height": {
+        "name": "Height"
+      },
+      "temperature": {
+        "name": "Body temperature"
+      },
+      "head_circumference": {
+        "name": "Head circumference"
+      },
+      "chest_circumference": {
+        "name": "Chest circumference"
+      },
+      "foot_size": {
+        "name": "Foot size"
+      },
+      "today_breast_feeding_count": {
+        "name": "Breastfeeding sessions today"
+      },
+      "today_breast_feeding_duration": {
+        "name": "Breastfeeding time today"
+      },
+      "today_formula_total": {
+        "name": "Formula today"
+      },
+      "today_expressed_breast_milk_total": {
+        "name": "Expressed breast milk today"
+      },
+      "today_pumping_total": {
+        "name": "Pumped milk today"
+      },
+      "today_drink_total": {
+        "name": "Drinks today"
+      },
+      "today_pee_count": {
+        "name": "Pees today"
+      },
+      "today_poop_count": {
+        "name": "Poops today"
+      },
+      "today_sleep_total": {
+        "name": "Sleep today"
+      },
+      "timeline": {
+        "name": "Timeline"
+      },
+      "last_update": {
+        "name": "Feed last update"
+      }
+    },
+    "binary_sensor": {
+      "sleeping": {
+        "name": "Sleeping"
+      }
+    }
+  },
+  "issues": {
+    "feed_unavailable": {
+      "title": "PiyoLog feed is unavailable",
+      "description": "The data feed returned 404 repeatedly. The feed may have expired or been revoked in the PiyoLog app. Create a new feed and reconfigure the integration."
+    }
+  }
+}

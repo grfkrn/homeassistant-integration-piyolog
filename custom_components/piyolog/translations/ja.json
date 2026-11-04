@@ -1,0 +1,173 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "ぴよログ データフィードを接続",
+        "description": "ぴよログアプリの「設定 → データフィード」でフィードを作成し、そのURLを貼ってください。URL自体が秘密情報です。Home Assistant 内にのみ保存されます。",
+        "data": {
+          "name": "ラベル（デバイス名）",
+          "feed_url": "フィードURL",
+          "feed_url_long": "長期間フィードURL（任意、28日など）"
+        }
+      }
+    },
+    "error": {
+      "invalid_url": "ぴよログのフィードURLの形式ではありません。",
+      "cannot_connect": "フィードを取得できませんでした。URLとネットワークを確認してください。",
+      "feed_unavailable": "フィードが利用できません（期限切れ・失効・プラン停止など）。アプリで新しいフィードを作成してください。"
+    },
+    "abort": {
+      "already_configured": "このフィードは既に設定されています。"
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "data": {
+          "scan_interval": "メインフィードの取得間隔（分）"
+        }
+      }
+    }
+  },
+  "entity": {
+    "sensor": {
+      "last_breast_feeding": {
+        "name": "最後の授乳"
+      },
+      "last_formula": {
+        "name": "最後のミルク"
+      },
+      "last_expressed_breast_milk": {
+        "name": "最後の搾母乳"
+      },
+      "last_pumping": {
+        "name": "最後の搾乳"
+      },
+      "last_sleep": {
+        "name": "最後に寝た"
+      },
+      "last_wake_up": {
+        "name": "最後に起きた"
+      },
+      "last_pee": {
+        "name": "最後のおしっこ"
+      },
+      "last_poop": {
+        "name": "最後のうんち"
+      },
+      "last_drink": {
+        "name": "最後ののみもの"
+      },
+      "last_solid": {
+        "name": "最後の離乳食"
+      },
+      "last_snack": {
+        "name": "最後のおやつ"
+      },
+      "last_meal": {
+        "name": "最後のごはん"
+      },
+      "last_bath": {
+        "name": "最後のお風呂"
+      },
+      "last_medicine": {
+        "name": "最後のくすり"
+      },
+      "last_hospital": {
+        "name": "最後の病院"
+      },
+      "last_walking": {
+        "name": "最後のさんぽ"
+      },
+      "last_vaccine": {
+        "name": "最後の予防接種"
+      },
+      "last_milestone": {
+        "name": "最後の「できた」"
+      },
+      "last_cough": {
+        "name": "最後のせき"
+      },
+      "last_vomiting": {
+        "name": "最後に吐いた"
+      },
+      "last_rash": {
+        "name": "最後の発疹"
+      },
+      "last_injury": {
+        "name": "最後のけが"
+      },
+      "last_memo": {
+        "name": "最後のメモ"
+      },
+      "last_other": {
+        "name": "最後のその他"
+      },
+      "last_custom": {
+        "name": "最後のカスタム記録"
+      },
+      "weight": {
+        "name": "体重"
+      },
+      "height": {
+        "name": "身長"
+      },
+      "temperature": {
+        "name": "体温"
+      },
+      "head_circumference": {
+        "name": "頭囲"
+      },
+      "chest_circumference": {
+        "name": "胸囲"
+      },
+      "foot_size": {
+        "name": "足サイズ"
+      },
+      "today_breast_feeding_count": {
+        "name": "今日の授乳回数"
+      },
+      "today_breast_feeding_duration": {
+        "name": "今日の授乳時間"
+      },
+      "today_formula_total": {
+        "name": "今日のミルク量"
+      },
+      "today_expressed_breast_milk_total": {
+        "name": "今日の搾母乳量"
+      },
+      "today_pumping_total": {
+        "name": "今日の搾乳量"
+      },
+      "today_drink_total": {
+        "name": "今日ののみもの量"
+      },
+      "today_pee_count": {
+        "name": "今日のおしっこ回数"
+      },
+      "today_poop_count": {
+        "name": "今日のうんち回数"
+      },
+      "today_sleep_total": {
+        "name": "今日の睡眠時間"
+      },
+      "timeline": {
+        "name": "タイムライン"
+      },
+      "last_update": {
+        "name": "フィード最終更新"
+      }
+    },
+    "binary_sensor": {
+      "sleeping": {
+        "name": "睡眠中"
+      }
+    }
+  },
+  "issues": {
+    "feed_unavailable": {
+      "title": "ぴよログのフィードが利用できません",
+      "description": "データフィードが繰り返し404を返しています。アプリ側でフィードの期限切れ・失効が起きた可能性があります。新しいフィードを作成し、統合を再設定してください。"
+    }
+  }
+}
