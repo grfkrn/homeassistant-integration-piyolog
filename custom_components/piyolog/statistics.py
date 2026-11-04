@@ -57,17 +57,19 @@ MEASUREMENTS: list[tuple[str, str, str, str]] = [
 ]
 
 # stat key -> (unit_of_measurement, unit_class)
+# NOTE: the recorder does not support unit_class "time" for imported
+# statistics, so minute-based series use no unit class.
 DAILY_SERIES: dict[str, tuple[str | None, str | None]] = {
     "breast_feeding_ml": ("mL", "volume"),
     "breast_feeding_count": (None, None),
-    "breast_feeding_minutes": ("min", "time"),
+    "breast_feeding_minutes": ("min", None),
     "formula_ml": ("mL", "volume"),
     "expressed_breast_milk_ml": ("mL", "volume"),
     "pumping_ml": ("mL", "volume"),
     "drink_ml": ("mL", "volume"),
     "pee_count": (None, None),
     "poop_count": (None, None),
-    "sleep_minutes": ("min", "time"),
+    "sleep_minutes": ("min", None),
 }
 
 
@@ -103,50 +105,60 @@ def async_import_feed_statistics(
     fingerprint = _fingerprint(data)
     if state.get("fingerprint") == fingerprint:
         return
-    try:
-        for feed_type, entity_id, unit, unit_class in MEASUREMENTS:
-            buckets = data.measurement_buckets.get(feed_type)
-            if not buckets:
-                continue
-            metadata: StatisticMetaData = {
-                "mean_type": StatisticMeanType.ARITHMETIC,
-                "has_sum": False,
-                "name": None,
-                "source": "recorder",
-                "statistic_id": entity_id,
-                "unit_class": unit_class,
-                "unit_of_measurement": unit,
+    # Each series is imported independently: one bad series must not
+    # block the others.
+    for feed_type, entity_id, unit, unit_class in MEASUREMENTS:
+        buckets = data.measurement_buckets.get(feed_type)
+        if not buckets:
+            continue
+        metadata: StatisticMetaData = {
+            "mean_type": StatisticMeanType.ARITHMETIC,
+            "has_sum": False,
+            "name": None,
+            "source": "recorder",
+            "statistic_id": entity_id,
+            "unit_class": unit_class,
+            "unit_of_measurement": unit,
+        }
+        stats: list[StatisticData] = [
+            {
+                "start": bucket["start"],
+                "mean": bucket["mean"],
+                "min": bucket["min"],
+                "max": bucket["max"],
             }
-            stats: list[StatisticData] = [
-                {
-                    "start": bucket["start"],
-                    "mean": bucket["mean"],
-                    "min": bucket["min"],
-                    "max": bucket["max"],
-                }
-                for bucket in buckets
-            ]
+            for bucket in buckets
+        ]
+        try:
             async_import_statistics(hass, metadata, stats)
-        for key, (unit, unit_class) in DAILY_SERIES.items():
-            points = data.daily_totals.get(key)
-            if not points:
-                continue
-            metadata = {
-                "mean_type": StatisticMeanType.ARITHMETIC,
-                "has_sum": False,
-                "name": None,
-                "source": DOMAIN,
-                "statistic_id": f"{DOMAIN}:daily_{key}",
-                "unit_class": unit_class,
-                "unit_of_measurement": unit,
-            }
-            stats = [
-                {"start": _hour_floor_utc(point["start"]), "mean": point["value"]}
-                for point in points
-            ]
+        except HomeAssistantError as err:
+            _LOGGER.warning(
+                "PiyoLog statistics import failed for %s: %s", entity_id, err
+            )
+    for key, (unit, unit_class) in DAILY_SERIES.items():
+        points = data.daily_totals.get(key)
+        if not points:
+            continue
+        metadata = {
+            "mean_type": StatisticMeanType.ARITHMETIC,
+            "has_sum": False,
+            "name": None,
+            "source": DOMAIN,
+            "statistic_id": f"{DOMAIN}:daily_{key}",
+            "unit_class": unit_class,
+            "unit_of_measurement": unit,
+        }
+        stats = [
+            {"start": _hour_floor_utc(point["start"]), "mean": point["value"]}
+            for point in points
+        ]
+        try:
             async_add_external_statistics(hass, metadata, stats)
-    except HomeAssistantError as err:
-        _LOGGER.warning("PiyoLog statistics import failed: %s", err)
-        return
+        except HomeAssistantError as err:
+            _LOGGER.warning(
+                "PiyoLog statistics import failed for %s: %s",
+                metadata["statistic_id"],
+                err,
+            )
     state["fingerprint"] = fingerprint
     _LOGGER.debug("PiyoLog statistics imported (fingerprint %s)", fingerprint[:8])
