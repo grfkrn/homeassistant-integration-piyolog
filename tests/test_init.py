@@ -89,6 +89,14 @@ async def test_setup_creates_piyolog_entities(hass: HomeAssistant) -> None:
     assert timeline is not None
     assert isinstance(timeline.attributes.get("records"), list)
 
+    recent = hass.states.get("sensor.piyolog_recent_events")
+    assert recent is not None
+    recent_records = recent.attributes.get("records")
+    assert isinstance(recent_records, list)
+    assert len(recent_records) == 3
+    assert recent.attributes.get("count") == 3
+    assert recent.attributes.get("total_records") == 3
+
     last_update = hass.states.get("sensor.piyolog_last_update")
     assert last_update is not None
     assert last_update.attributes.get("record_count") == 3

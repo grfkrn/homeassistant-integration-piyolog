@@ -37,6 +37,7 @@ Set a feed URL and your baby's records — feeding, sleep, diapers, body measure
 | 当日集計 | `sensor.piyolog_today_formula_total` | 今日の合計・回数（JST等のローカル日付区切り） |
 | 状態 | `binary_sensor.piyolog_sleeping` | いま寝ているか（Sleep/WakeUp のペアから判定） |
 | タイムライン | `sensor.piyolog_timeline` | 属性 `records` に当日の記録一覧（新しい順） |
+| 直近の記録 | `sensor.piyolog_recent_events` | 属性 `records` に日付を問わず直近100件の記録一覧（新しい順） |
 | フィード状態 | `sensor.piyolog_last_update` | フィードの生成時刻と記録件数 |
 
 カスタム記録（Custom1〜10）は `sensor.piyolog_last_custom` に集約されます（フィードにはカスタム記録の設定名が含まれないため）。

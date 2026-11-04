@@ -1,6 +1,6 @@
 """Tests for feed.py (pure aggregation logic, no Home Assistant needed)."""
 
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from zoneinfo import ZoneInfo
 
 import pytest
@@ -151,6 +151,33 @@ def test_empty_aggregate():
     assert data.currently_sleeping is False
     assert data.today_sleep_seconds == 0
     assert data.timeline_today == []
+    assert data.recent_events == []
+
+
+def test_recent_events_span_days_newest_first():
+    data = _aggregate()
+    # All 12 sample records, including yesterday's, newest first.
+    assert len(data.recent_events) == 12
+    times = [e["time"] for e in data.recent_events]
+    assert times == sorted(times, reverse=True)
+    assert data.recent_events[-1]["type"] == "Weight"  # 2026-09-08 record
+    assert len(data.timeline_today) < len(data.recent_events)
+
+
+def test_recent_events_capped_at_100():
+    base = datetime(2026, 9, 1, 0, 0, tzinfo=UTC)
+    records = []
+    for i in range(150):
+        dt = base + timedelta(minutes=i)
+        records.append(
+            rec(f"r{i}", dt.strftime("%Y-%m-%dT%H:%M:%S.000Z"), "Pee")
+        )
+    data = _aggregate(records)
+    assert data.record_count == 150
+    assert len(data.recent_events) == 100
+    times = [e["time"] for e in data.recent_events]
+    assert times == sorted(times, reverse=True)
+    assert data.recent_events[0]["time"] == "2026-09-01T02:29:00+00:00"
 
 
 def test_timeline_today_newest_first_with_summary():

@@ -489,6 +489,42 @@ class PiyologTimelineSensor(PiyologEntity, SensorEntity):
         }
 
 
+class PiyologRecentEventsSensor(PiyologEntity, SensorEntity):
+    """Recent events across all days; state is the newest record time.
+
+    Attributes hold the newest 100 records of the whole feed window
+    (newest first), regardless of the calendar day.
+    """
+
+    _attr_device_class = SensorDeviceClass.TIMESTAMP
+    _attr_icon = "mdi:history"
+    _attr_translation_key = "recent_events"
+
+    def __init__(
+        self, coordinator: PiyologCoordinator, entry: PiyologConfigEntry
+    ) -> None:
+        super().__init__(coordinator, entry, "recent_events")
+
+    @property
+    def native_value(self) -> datetime | None:
+        lasts = [
+            r.dt for r in self.coordinator.data.last_by_type.values() if r is not None
+        ]
+        return max(lasts) if lasts else None
+
+    @property
+    def extra_state_attributes(self) -> dict[str, Any] | None:
+        data = self.coordinator.data
+        return {
+            "records": data.recent_events,
+            "count": len(data.recent_events),
+            "total_records": data.record_count,
+            "generated_at": data.generated_at.isoformat()
+            if data.generated_at
+            else None,
+        }
+
+
 class PiyologLastUpdateSensor(PiyologEntity, SensorEntity):
     """When the feed data was generated."""
 
@@ -529,5 +565,6 @@ async def async_setup_entry(
     for description in TODAY_SENSORS:
         entities.append(PiyologTodaySensor(coordinator, entry, description))
     entities.append(PiyologTimelineSensor(coordinator, entry))
+    entities.append(PiyologRecentEventsSensor(coordinator, entry))
     entities.append(PiyologLastUpdateSensor(coordinator, entry))
     async_add_entities(entities)

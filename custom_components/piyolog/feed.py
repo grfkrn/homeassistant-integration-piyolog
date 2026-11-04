@@ -40,6 +40,7 @@ from .const import (
 
 FEED_TIMEOUT_SECONDS = 30
 TIMELINE_LIMIT = 50
+RECENT_LIMIT = 100
 
 
 class FeedError(Exception):
@@ -247,6 +248,7 @@ class AggregatedData:
     currently_sleeping: bool = False
     sleeping_since: datetime | None = None
     timeline_today: list[dict[str, Any]] = field(default_factory=list)
+    recent_events: list[dict[str, Any]] = field(default_factory=list)
 
     def last(self, record_type: str) -> Record | None:
         return self.last_by_type.get(record_type)
@@ -301,21 +303,32 @@ def aggregate(
 
     _aggregate_sleep(data, records, today_start, today_end, now)
 
-    timeline: list[dict[str, Any]] = []
-    for record in sorted(today_records, key=lambda r: r.dt, reverse=True)[
-        :TIMELINE_LIMIT
-    ]:
-        entry: dict[str, Any] = {
-            "time": record.dt.astimezone(tz).isoformat(),
-            "type": record.type,
-            "label": type_label(record.type),
-            "summary": summarize(record),
-        }
-        if record.memo:
-            entry["memo"] = record.memo
-        timeline.append(entry)
-    data.timeline_today = timeline
+    data.timeline_today = [
+        _timeline_entry(record, tz)
+        for record in sorted(today_records, key=lambda r: r.dt, reverse=True)[
+            :TIMELINE_LIMIT
+        ]
+    ]
+    # Most recent events across all days in the feed window (newest first).
+    data.recent_events = [
+        _timeline_entry(record, tz)
+        for record in sorted(records, key=lambda r: r.dt, reverse=True)[
+            :RECENT_LIMIT
+        ]
+    ]
     return data
+
+
+def _timeline_entry(record: Record, tz: tzinfo) -> dict[str, Any]:
+    entry: dict[str, Any] = {
+        "time": record.dt.astimezone(tz).isoformat(),
+        "type": record.type,
+        "label": type_label(record.type),
+        "summary": summarize(record),
+    }
+    if record.memo:
+        entry["memo"] = record.memo
+    return entry
 
 
 def _aggregate_sleep(
