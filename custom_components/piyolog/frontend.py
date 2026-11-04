@@ -1,10 +1,13 @@
 """Serve and register the bundled Lovelace cards.
 
 The card JavaScript lives in ``frontend/`` next to this module. It is
-served under ``/piyolog_static/`` and loaded on every frontend page via
-``add_extra_js_url`` so ``custom:piyolog-card`` and
-``custom:piyolog-elapsed-card`` are available in the card picker
-without any manual resource registration.
+served under ``/piyolog_static/`` and loaded through two independent
+paths: ``add_extra_js_url`` (the app shell) and Lovelace resources (the
+HACS path). The two paths deliberately use different query strings
+(``?e=`` for the shell, ``?v=`` for resources): browsers key their
+module map by full URL, and a module whose fetch failed once can stay
+failed for the whole page session — with distinct URLs, one path's
+failed fetch cannot poison the other, so the cards still load.
 """
 
 from __future__ import annotations
@@ -38,8 +41,11 @@ async def async_register_frontend(hass: HomeAssistant) -> None:
     await hass.http.async_register_static_paths(
         [StaticPathConfig(URL_BASE, frontend_dir, cache_headers=False)]
     )
-    add_extra_js_url(hass, f"{URL_BASE}/{CARD_FILENAME}?v={version}")
-    add_extra_js_url(hass, f"{URL_BASE}/{ELAPSED_CARD_FILENAME}?v={version}")
+    # NOTE: the shell URLs use "?e=" on purpose — they must differ from
+    # the Lovelace resource URLs ("?v=") so the two loading paths keep
+    # independent module records (see the module docstring).
+    add_extra_js_url(hass, f"{URL_BASE}/{CARD_FILENAME}?e={version}")
+    add_extra_js_url(hass, f"{URL_BASE}/{ELAPSED_CARD_FILENAME}?e={version}")
     _LOGGER.debug("Registered PiyoLog Lovelace cards (version %s)", version)
 
 

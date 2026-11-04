@@ -19,6 +19,10 @@ def test_elapsed_card_is_bundled_and_registered() -> None:
         ROOT / "custom_components" / "piyolog" / "frontend.py"
     ).read_text(encoding="utf-8")
     assert "piyolog-elapsed-card.js" in frontend_py
+    # The app-shell URLs must use "?e=" while resources use "?v=", so a
+    # failed fetch on one loading path cannot poison the other (module
+    # records are keyed by full URL for the page session).
+    assert '?e={version}' in frontend_py
 
     js = (FRONTEND_DIR / "piyolog-elapsed-card.js").read_text(encoding="utf-8")
     # The card picker shows a live preview of the gauge.
