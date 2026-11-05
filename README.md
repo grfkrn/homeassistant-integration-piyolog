@@ -8,7 +8,7 @@
 A Home Assistant custom integration for the official **PiyoLog data feed** (schema v1, read-only).
 It exposes feed records as entities, imports past records into long-term statistics, and bundles a Lovelace timeline card. The detailed feed-field and entity mapping tables in this README are written in Japanese; entity IDs and feed type names are language-neutral.
 
-- バージョン: 1.7.6
+- バージョン: 1.7.7
 - ドメイン: `piyolog`
 - 方式: `cloud_polling`（Home Assistant からフィードを定期取得）
 - 追加の Python 依存: なし
