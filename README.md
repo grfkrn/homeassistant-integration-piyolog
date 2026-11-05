@@ -3,6 +3,9 @@
 育児記録アプリ「ぴよログ」の公式 **データフィード** を Home Assistant に取り込むカスタム統合です。
 フィードURLを設定すると、ぴよログに記録した授乳・睡眠・排泄・身体計測などが、エンティティ、長期統計、同梱の Lovelace カードで利用できるようになります。
 
+> [!IMPORTANT]
+> **この統合は非公式のサードパーティ製です。** ぴよログ公式（Sakabou Inc.／株式会社サカボウ）とは一切関係ありません。公式に提供されている「データフィード」機能の URL を、利用者自身が設定して読み取る仕組みです。ぴよログおよび PiyoLog の名称・ロゴの権利は、権利者である Sakabou Inc. に帰属します。
+
 この統合は **読み取り専用** です。Home Assistant からぴよログへ記録を追加・変更・削除することはできません。
 
 A Home Assistant custom integration for the official **PiyoLog data feed** (schema v1, read-only).
