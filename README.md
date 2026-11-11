@@ -110,7 +110,7 @@ It exposes feed records as entities, imports past records into long-term statist
 
 ## データフィードの形式
 
-公式データフィードは、集計済みデータではなく、記録そのものの一覧を JSON で返します。集計はこの統合側で行います。
+公式データフィードは集計済みデータではなく、記録そのものの一覧を JSON で返します。集計はこの統合側で行います。
 
 次は説明用の架空サンプルです。実在のフィードURLや記録ではありません。
 
@@ -182,9 +182,9 @@ It exposes feed records as entities, imports past records into long-term statist
 
 ぴよログでは、未入力の値はJSONから省略されます。この統合では「記録があったこと」と「量が入力されていたこと」を分けて扱います。
 
-- 回数は、値が省略された記録も含めて数えます
-- 量の合計には、数値が入っている記録だけを加えます
-- 母乳量では、量が記録された回数を `measured_count` として分けて持ちます
+- 回数は値が省略された記録も含めて数えます
+- 量の合計には数値が入っている記録だけを加えます
+- 母乳量では量が記録された回数を `measured_count` として分けて持ちます
 - 値が省略された記録を、量0の記録として統計へ入れることはありません
 
 ### 授乳（`BreastFeeding`）の専用項目
@@ -237,7 +237,7 @@ It exposes feed records as entities, imports past records into long-term statist
 
 ## フィード項目（`type`）一覧
 
-日本語ラベルは、タイムラインやカードで使う表示名です。「主な対応先」にあるエンティティの詳細は、後述の対応表を参照してください。
+日本語ラベルはタイムラインやカードで使う表示名です。「主な対応先」にあるエンティティの詳細は、後述の対応表を参照してください。
 
 | `type` | 日本語ラベル／項目概要 | 主な値・専用項目 | 主な対応先 |
 |---|---|---|---|
@@ -280,11 +280,11 @@ It exposes feed records as entities, imports past records into long-term statist
 ### 表の読み方
 
 - 「状態」は Home Assistant のエンティティの値そのものです
-- 「属性」は、エンティティの詳細画面やテンプレートから参照できる追加情報です
-- 「最新」「最後」は、取得できたフィード範囲内での最新を意味します。フィードから外れた過去の記録までは遡れません
-- 「今日」は、Home Assistant の既定タイムゾーンにおけるローカル日付の0時から24時までです
+- 「属性」はエンティティの詳細画面やテンプレートから参照できる追加情報です
+- 「最新」「最後」は取得できたフィード範囲内での最新を意味します。フィードから外れた過去の記録までは遡れません
+- 「今日」はHome Assistant の既定タイムゾーンにおけるローカル日付の0時から24時までです
 - 最終記録センサーと身体計測センサーは、対象記録がフィード範囲内に無い場合 `unknown` になります
-- 当日集計センサーは、対象記録が無い場合も原則として `0` を返します
+- 当日集計センサーは対象記録が無い場合も原則として `0` を返します
 
 ### 最終記録センサー（25個）
 
@@ -331,7 +331,7 @@ It exposes feed records as entities, imports past records into long-term statist
 
 ### 身体計測センサー（6個）
 
-状態は、対応する `type` の最新記録の `value.value` です。足サイズ以外には、計測日時 `measured_at` と、フィード範囲内の全計測点を持つ `history` 属性が付きます。
+状態は対応する `type` の最新記録の `value.value` です。足サイズ以外には、計測日時 `measured_at` と、フィード範囲内の全計測点を持つ `history` 属性が付きます。
 
 `history` は古い順の配列で、各要素は `{"time": ローカル時刻のISO文字列, "value": 数値}` です。保持上限は新しい順に200点です。Home Assistant のレコーダーには統合導入前の状態履歴が無いため、導入前の推移をグラフ化したい場合に使えます。
 
@@ -344,7 +344,7 @@ It exposes feed records as entities, imports past records into long-term statist
 | `sensor.piyolog_chest_circumference` | 胸囲 | `Chest` | cm | `measured_at`、`history`。長期統計にも投入します |
 | `sensor.piyolog_foot_size` | 足サイズ | `Foot` | cm | 状態は `value.left` を優先し、左が無い場合は `value.right`。属性 `measured_at` と、存在する側の `left` / `right`。`history` と長期統計の対象外です |
 
-身体計測には、別途「最後の体重」などの timestamp センサーは作りません。最新の計測日時は各センサーの `measured_at` 属性で確認します。
+身体計測には別途「最後の体重」などの timestamp センサーは作りません。最新の計測日時は各センサーの `measured_at` 属性で確認します。
 
 ### 当日集計センサー（10個）
 
@@ -401,7 +401,7 @@ It exposes feed records as entities, imports past records into long-term statist
 
 ## 長期統計への自動インポート
 
-この統合は、フィードの過去記録を Home Assistant の **長期統計** へ自動で投入します。設定は不要で、常時有効です（無効化する設定はありません）。
+この統合はフィードの過去記録を Home Assistant の **長期統計** へ自動で投入します。設定は不要で、常時有効です（無効化する設定はありません）。
 
 状態履歴は過去へさかのぼって追加できないため、導入前の記録は長期統計で扱います。投入内容が変わった場合だけ再送し、同じ内容を繰り返し送ることはありません。統計インポートでエラーが起きても、その系列だけを失敗として記録し、通常のエンティティ更新は継続します。
 
@@ -516,7 +516,7 @@ entity: sensor.piyolog_timeline
 
 ### WebSocket API `piyolog/get_records`
 
-カードは、センサー属性ではなく WebSocket API から日別の記録を取得します。これにより、28日分すべてをセンサー属性へ載せる必要がありません。
+カードはセンサー属性ではなく WebSocket API から日別の記録を取得します。これにより、28日分すべてをセンサー属性へ載せる必要がありません。
 
 リクエスト:
 
