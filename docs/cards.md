@@ -21,10 +21,8 @@
 
 ### 設定
 
-| 設定 | 意味 | 既定値 |
-|---|---|---|
-| `entity` | 対象のお子様を特定するアンカー。通常はタイムラインセンサー | <code>sensor.<wbr>piyolog_<wbr>timeline</code> |
-| `title` | 任意のタイトル | （なし） |
+- `entity`: 対象のお子様を特定するアンカー。通常はタイムラインセンサー。既定値は `sensor.piyolog_timeline`
+- `title`: 任意のタイトル。既定値はありません
 
 ```yaml
 type: custom:piyolog-card
@@ -41,20 +39,20 @@ entity: sensor.piyolog_timeline
 
 ### モードと計測対象
 
-| モード | 既定タイトル | 計測対象（グループ内で最も新しい記録から計測） |
-|---|---|---|
-| `diaper` | おむつ経過時間 | <code>sensor.<wbr>piyolog_<wbr>last_<wbr>poop</code>（うんち）、<code>sensor.<wbr>piyolog_<wbr>last_<wbr>pee</code>（おしっこ） |
-| `feeding` | ミルク経過時間 | <code>sensor.<wbr>piyolog_<wbr>last_<wbr>expressed_<wbr>breast_<wbr>milk</code>（搾母乳）、<code>sensor.<wbr>piyolog_<wbr>last_<wbr>breast_<wbr>feeding</code>（母乳）、<code>sensor.<wbr>piyolog_<wbr>last_<wbr>formula</code>（ミルク）。搾乳（Pumping）は授乳ではないため対象外 |
+計測対象は、グループ内で最も新しい記録から計測します。
+
+- `diaper`（既定タイトル: おむつ経過時間）: `sensor.piyolog_last_poop`（うんち）、`sensor.piyolog_last_pee`（おしっこ）
+- `feeding`（既定タイトル: ミルク経過時間）: `sensor.piyolog_last_expressed_breast_milk`（搾母乳）、`sensor.piyolog_last_breast_feeding`（母乳）、`sensor.piyolog_last_formula`（ミルク）。搾乳（Pumping）は授乳ではないため対象外
 
 対象センサーはアンカー（`entity`）と同じ接頭辞から自動で解決されます。直接指定したい場合は `entities` に並べることもできます。
 
 ### しきい値と表示
 
-| 設定 | 意味 | 既定値（両モード共通） |
-|---|---|---|
-| `yellow_after_hours` | 緑→黄の切替わり（時間） | 2.5 |
-| `red_after_hours` | 黄→赤の切替わり（時間） | 3 |
-| `max_hours` | ゲージの最大値（時間） | 5 |
+既定値は両モード共通です。
+
+- `yellow_after_hours`: 緑→黄の切替わり（時間）。既定値は 2.5
+- `red_after_hours`: 黄→赤の切替わり（時間）。既定値は 3
+- `max_hours`: ゲージの最大値（時間）。既定値は 5
 
 - 経過時間は「1時間45分」形式で表示され、最後に使われた記録の種類と時刻も小さく表示されます
 - 経過時間が `max_hours` を超えても数値は増え続け、ゲージだけが最大で止まります
@@ -74,7 +72,7 @@ entity: sensor.piyolog_timeline
 カードの JavaScript は `/piyolog_static/` から配信され、次の2経路で読み込まれます。
 
 1. `add_extra_js_url`（フロントエンドの土台ページへの埋め込み）。URL は `?e=<統合の版数>`
-2. Lovelace リソースへの自動登録（ストレージモード時のみ。HACS カードと同じ読み込み経路）。URL は `?v=<統合の版数>`
+2. Lovelace リソースへの自動登録（ストレージモード時のみ。マーケットプレイス（HACS）のカードと同じ読み込み経路）。URL は `?v=<統合の版数>`
 
 2経路のURLはクエリ文字列を意図的に分けてあります。ブラウザはモジュールの読み込み結果（失敗を含む）をURL単位でページセッション中保持するため、同一URLだと片方の取得失敗がもう片方にも及んで「Custom element doesn't exist」のままになることがあります。分離することで、片方が失敗してももう片方から読み込めます。
 

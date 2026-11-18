@@ -66,9 +66,9 @@ It exposes feed records as entities, imports past records into long-term statist
 
 ## インストール
 
-### HACS（カスタムリポジトリ）
+### マーケットプレイス（HACS）
 
-1. HACS → ⋯ → カスタムリポジトリに `https://github.com/grfkrn/homeassistant-integration-piyolog` を「統合」として追加します
+1. マーケットプレイス（HACS）→ ⋯ → カスタムリポジトリに `https://github.com/grfkrn/homeassistant-integration-piyolog` を「統合」として追加します
 2. 「PiyoLog」をインストールし、Home Assistant を再起動します
 3. 「設定 → デバイスとサービス → 統合を追加」から「PiyoLog」を選びます
 4. 下の「設定項目とフィードURLの対応表」に従って入力します
@@ -264,7 +264,7 @@ It exposes feed records as entities, imports past records into long-term statist
 
 統合には専用カード `custom:piyolog-card` が同梱されています。セットアップ時に自動で登録されるため、Lovelace リソースの手動追加は不要です。ダッシュボードのカード選択画面では「PiyoLog Timeline」として表示され、プレビューには当日の実データがそのまま表示されます。
 
-カードJSの登録は2経路で行われます。`add_extra_js_url`（フロントの土台ページへの埋め込み）と、Lovelace リソースへの自動登録（ストレージモード時のみ。HACS カードと同じ読み込み経路）です。2経路のURLはクエリ文字列を意図的に分けてあります（土台側は `?e=<版数>`、リソース側は `?v=<版数>`）。ブラウザはモジュールの読み込み結果をURL単位で保持するため、同一URLだと片方の取得失敗がもう片方にも及んで「Custom element doesn't exist」のままになることがあり、分離することで片方が失敗してももう片方から読み込めます。リソース一覧には `/piyolog_static/…?v=<版数>` の2件が自動で追加・更新されます（YAML モードでは追加されません）。
+カードJSの登録は2経路で行われます。`add_extra_js_url`（フロントの土台ページへの埋め込み）と、Lovelace リソースへの自動登録（ストレージモード時のみ。マーケットプレイス（HACS）のカードと同じ読み込み経路）です。2経路のURLはクエリ文字列を意図的に分けてあります（土台側は `?e=<版数>`、リソース側は `?v=<版数>`）。ブラウザはモジュールの読み込み結果をURL単位で保持するため、同一URLだと片方の取得失敗がもう片方にも及んで「Custom element doesn't exist」のままになることがあり、分離することで片方が失敗してももう片方から読み込めます。リソース一覧には `/piyolog_static/…?v=<版数>` の2件が自動で追加・更新されます（YAML モードでは追加されません）。
 
 各カードの詳細とトラブルシューティングは [同梱カードの詳細](docs/cards.md) にまとめています。
 
@@ -312,15 +312,13 @@ mode: feeding
 entity: sensor.piyolog_timeline
 ```
 
-| 設定 | 意味 | 既定値（diaper） | 既定値（feeding） |
-|---|---|---:|---:|
-| `mode` | `diaper`（うんち／おしっこ）または `feeding`（搾母乳／母乳／ミルク） | `diaper` | — |
-| `entity` | 対象のお子様を特定するアンカー。ここから同じ接頭辞の最終記録センサーを参照します | <code>sensor.<wbr>piyolog_<wbr>timeline</code> | 同左 |
-| `title` | カードのタイトル | おむつ経過時間 | ミルク経過時間 |
-| `yellow_after_hours` | 緑→黄の切替わり（時間） | 2.5 | 2.5 |
-| `red_after_hours` | 黄→赤の切替わり（時間） | 3 | 3 |
-| `max_hours` | ゲージの最大値（時間）。経過時間がこれを超えても数値は増え続け、ゲージだけが最大で止まります | 5 | 5 |
-| `entities` | （任意）参照する最終記録センサーを直接並べる場合に使います。通常は不要です | — | — |
+- `mode`: `diaper`（うんち／おしっこ）または `feeding`（搾母乳／母乳／ミルク）。既定値は `diaper`
+- `entity`: 対象のお子様を特定するアンカー。ここから同じ接頭辞の最終記録センサーを参照します。既定値は `sensor.piyolog_timeline`（両モード共通）
+- `title`: カードのタイトル。既定値は diaper が「おむつ経過時間」、feeding が「ミルク経過時間」
+- `yellow_after_hours`: 緑→黄の切替わり（時間）。既定値は 2.5（両モード共通）
+- `red_after_hours`: 黄→赤の切替わり（時間）。既定値は 3（両モード共通）
+- `max_hours`: ゲージの最大値（時間）。経過時間がこれを超えても数値は増え続け、ゲージだけが最大で止まります。既定値は 5（両モード共通）
+- `entities`: （任意）参照する最終記録センサーを直接並べる場合に使います。通常は不要です。既定値はありません
 
 計測対象は次の最終記録センサーです。グループ内で最も新しい記録の `datetime` から現在時刻までの経過を「1時間45分」形式で表示し、最後に使われた記録の種類と時刻も小さく表示します。
 
