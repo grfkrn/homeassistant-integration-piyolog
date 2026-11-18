@@ -84,7 +84,7 @@ It exposes feed records as entities, imports past records into long-term statist
 | 設定項目 | 必須 | 入れる値・動作 |
 |---|---|---|
 | ラベル（デバイス名） | 任意 | Home Assistant 上のデバイス名と設定エントリ名。空欄の場合は `PiyoLog`。entity_id には影響しません |
-| フィードURL | 必須 | メインフィードのURL。形式は `https://feed.piyolog.com/v1/feed/{期間}/{フィードID}/{秘密部分}` で、期間は `24h` / `3d` / `7d` / `28d` のいずれかです |
+| フィードURL | 必須 | メインフィードのURL。形式は <code>https://feed.piyolog.com/<wbr>v1/<wbr>feed/<wbr>{期間}/<wbr>{フィードID}/<wbr>{秘密部分}</code> で、期間は `24h` / `3d` / `7d` / `28d` のいずれかです |
 | 長期間フィードURL | 任意 | 28日フィードなど、もう1本のフィードURL。メインフィードと同じ形式です |
 
 設定時は、形式チェックだけでなく、入力されたフィードを実際に1回取得して確認します。
@@ -152,7 +152,7 @@ It exposes feed records as entities, imports past records into long-term statist
 | JSON項目 | 概要 | 統合での扱い |
 |---|---|---|
 | `schema_version` | フィード仕様の版 | 現在は `1` のみ対応。異なる値は形式エラーとして扱い、記録0件とは解釈しません |
-| `generated_at` | このJSONが生成された時刻（ISO 8601、通常はUTC） | `sensor.piyolog_last_update` の状態。2本のフィードでは、より新しい方の生成時刻を使います |
+| `generated_at` | このJSONが生成された時刻（ISO 8601、通常はUTC） | <code>sensor.<wbr>piyolog_<wbr>last_<wbr>update</code> の状態。2本のフィードでは、より新しい方の生成時刻を使います |
 | `range.from` / `range.to` | フィードが対象とする期間 | 参考情報として返されますが、集計範囲の判定には直接使いません。実際に返った `records` をもとに集計します |
 | `records` | 記録の配列 | 時刻順に並べ替え、`event_id` で重複を取り除いてから集計します |
 
@@ -162,7 +162,7 @@ It exposes feed records as entities, imports past records into long-term statist
 |---|---|---|
 | `event_id` | 記録を一意に識別するID | 2本のフィードをマージする際の重複判定キー。エンティティやカードの応答には含めません |
 | `datetime` | 記録された日時。ISO 8601で、通常はUTC | Home Assistant の既定タイムゾーンへ変換して、日付判定と表示を行います |
-| `type` | 記録の種類。下記「フィード項目（type）一覧」を参照 | 対応する最終記録・身体計測・当日集計へ振り分けます |
+| `type` | 記録の種類。[フィード項目（type）一覧](docs/reference.md#フィード項目type一覧) を参照 | 対応する最終記録・身体計測・当日集計へ振り分けます |
 | `value` | 量や測定値を表すオブジェクト（任意） | `value.value` が数値なら量・測定値として取り出します。未入力で省略された場合は **0として扱いません** |
 | `value.value` | 数値の本体 | ミルク量、母乳量、体重、体温など。種類ごとに意味と単位が変わります |
 | `value.unit` | フィードが示す単位文字列 | 最終記録センサーでは属性 `unit` にそのまま保持します。身体計測センサーでは、各センサーで定義した kg / cm / °C として扱います |
@@ -237,167 +237,11 @@ It exposes feed records as entities, imports past records into long-term statist
 
 ## フィード項目（`type`）一覧
 
-日本語ラベルはタイムラインやカードで使う表示名です。「主な対応先」にあるエンティティの詳細は、後述の対応表を参照してください。
-
-| `type` | 日本語ラベル／項目概要 | 主な値・専用項目 | 主な対応先 |
-|---|---|---|---|
-| `BreastFeeding` | 母乳（直接授乳） | `leftTime`、`rightTime`、`last`、任意の `value.value`（ml） | 最終記録、授乳回数・時間・母乳量、長期統計 |
-| `Formula` | ミルク | `value.value`（ml） | 最終記録、今日のミルク量、長期統計 |
-| `ExpressedBreastMilk` | 搾母乳 | `value.value`（ml） | 最終記録、今日の搾母乳量、長期統計 |
-| `Pumping` | 搾乳 | `value.value`（ml） | 最終記録、今日の搾乳量、長期統計 |
-| `Sleep` | 寝る | 開始時刻は `datetime` | 最終記録、睡眠中センサー、睡眠時間 |
-| `WakeUp` | 起きる | 終了時刻は `datetime` | 最終記録、睡眠中センサー、睡眠時間、カードの睡眠時間 |
-| `Pee` | おしっこ | 発生時刻は `datetime` | 最終記録、今日のおしっこ回数、長期統計 |
-| `Poop` | うんち | `details.amount` / `hardness` / `color` | 最終記録、今日のうんち回数、長期統計 |
-| `Temperature` | 体温 | `value.value`（°C） | 身体計測、履歴属性、長期統計 |
-| `Height` | 身長 | `value.value`（cm） | 身体計測、履歴属性、長期統計 |
-| `Weight` | 体重 | `value.value`（kg） | 身体計測、履歴属性、長期統計 |
-| `Head` | 頭囲 | `value.value`（cm） | 身体計測、履歴属性、長期統計 |
-| `Chest` | 胸囲 | `value.value`（cm） | 身体計測、履歴属性、長期統計 |
-| `Foot` | 足サイズ | `value.left`、`value.right`（cm） | 足サイズセンサー |
-| `Solid` | 離乳食 | 時刻と `memo` が中心 | 最終記録、タイムライン |
-| `Snack` | おやつ | 時刻と `memo` が中心 | 最終記録、タイムライン |
-| `Meal` | ごはん | 時刻と `memo` が中心 | 最終記録、タイムライン |
-| `Drink` | のみもの | `value.value`（ml） | 最終記録、今日ののみもの量、長期統計 |
-| `Cough` | せき | 時刻と `memo` が中心 | 最終記録、タイムライン |
-| `Vomiting` | 吐く | 時刻と `memo` が中心 | 最終記録、タイムライン |
-| `Rash` | 発疹 | 時刻と `memo` が中心 | 最終記録、タイムライン |
-| `Injury` | けが | 時刻と `memo` が中心 | 最終記録、タイムライン |
-| `Bath` | お風呂 | 時刻と `memo` が中心 | 最終記録、タイムライン |
-| `Medicine` | くすり | 時刻と `memo` が中心 | 最終記録、タイムライン |
-| `Hospital` | 病院 | 時刻と `memo` が中心 | 最終記録、タイムライン |
-| `Walking` | さんぽ | 時刻と `memo` が中心 | 最終記録、タイムライン |
-| `Vaccine` | 予防接種 | 時刻と `memo` が中心 | 最終記録、タイムライン |
-| `Milestone` | できた | 時刻と `memo` が中心 | 最終記録、タイムライン |
-| `Memo` | メモ | 本文は `memo` | 最終記録、タイムライン |
-| `Other` | その他 | 時刻と `memo` が中心 | 最終記録、タイムライン |
-| `Custom1` ～ `Custom10` | カスタム1～10 | フィードにはアプリ側の設定名が含まれません | `sensor.piyolog_last_custom` に集約、タイムライン |
-
-どの種類の記録にも `memo` が付く場合があります。また、最終記録センサーは、対象記録に数値の `value.value` がある場合は種類を問わず属性 `value` として取り出します。
+`type` ごとの日本語ラベル、主な値・専用項目、主な対応先の一覧は、[対応表リファレンス](docs/reference.md#フィード項目type一覧) に分けました。
 
 ## エンティティ対応表
 
-### 表の読み方
-
-- 「状態」は Home Assistant のエンティティの値そのものです
-- 「属性」はエンティティの詳細画面やテンプレートから参照できる追加情報です
-- 「最新」「最後」は取得できたフィード範囲内での最新を意味します。フィードから外れた過去の記録までは遡れません
-- 「今日」はHome Assistant の既定タイムゾーンにおけるローカル日付の0時から24時までです
-- 最終記録センサーと身体計測センサーは、対象記録がフィード範囲内に無い場合 `unknown` になります
-- 当日集計センサーは対象記録が無い場合も原則として `0` を返します
-
-### 最終記録センサー（25個）
-
-状態はすべて、対応する `type` の最新記録の `datetime` です。対象が複数あるカスタム記録を除き、各センサーには共通属性 `count_today`（今日の同種記録数）が付きます。
-
-共通属性は次のとおりです。
-
-| 属性 | 元になるフィード値 | 内容 |
-|---|---|---|
-| `count_today` | 同じ `type` の当日記録数 | 値が省略された記録も含めて数えます |
-| `value` | `value.value` | 最新記録に数値が入っている場合だけ付きます |
-| `unit` | `value.unit` | フィード側の単位文字列をそのまま保持します |
-| `memo` | `memo` | 最新記録にメモがある場合だけ付きます |
-
-| entity_id | 表示名 | `type` | 種類固有の対応 |
-|---|---|---|---|
-| `sensor.piyolog_last_breast_feeding` | 最後の授乳 | `BreastFeeding` | `leftTime`（秒）→ `left_minutes`、`rightTime`（秒）→ `right_minutes`、`last` → `last_side`。量がある場合は `value` / `unit` |
-| `sensor.piyolog_last_formula` | 最後のミルク | `Formula` | 量がある場合は `value` / `unit` |
-| `sensor.piyolog_last_expressed_breast_milk` | 最後の搾母乳 | `ExpressedBreastMilk` | 量がある場合は `value` / `unit` |
-| `sensor.piyolog_last_pumping` | 最後の搾乳 | `Pumping` | 量がある場合は `value` / `unit` |
-| `sensor.piyolog_last_sleep` | 最後に寝た | `Sleep` | 睡眠開始時刻。固有の数値属性はありません |
-| `sensor.piyolog_last_wake_up` | 最後に起きた | `WakeUp` | 起床時刻。睡眠時間は状態には含めず、睡眠集計とカードで扱います |
-| `sensor.piyolog_last_pee` | 最後のおしっこ | `Pee` | 発生時刻。固有の数値属性はありません |
-| `sensor.piyolog_last_poop` | 最後のうんち | `Poop` | `details.amount` → `amount`、`details.hardness` → `hardness`、`details.color` → `color`（コード文字列のまま） |
-| `sensor.piyolog_last_drink` | 最後ののみもの | `Drink` | 量がある場合は `value` / `unit` |
-| `sensor.piyolog_last_solid` | 最後の離乳食 | `Solid` | 数値がある場合は `value` / `unit` |
-| `sensor.piyolog_last_snack` | 最後のおやつ | `Snack` | 数値がある場合は `value` / `unit` |
-| `sensor.piyolog_last_meal` | 最後のごはん | `Meal` | 数値がある場合は `value` / `unit` |
-| `sensor.piyolog_last_bath` | 最後のお風呂 | `Bath` | 数値がある場合は `value` / `unit` |
-| `sensor.piyolog_last_medicine` | 最後のくすり | `Medicine` | 数値がある場合は `value` / `unit` |
-| `sensor.piyolog_last_hospital` | 最後の病院 | `Hospital` | 数値がある場合は `value` / `unit` |
-| `sensor.piyolog_last_walking` | 最後のさんぽ | `Walking` | 数値がある場合は `value` / `unit` |
-| `sensor.piyolog_last_vaccine` | 最後の予防接種 | `Vaccine` | 数値がある場合は `value` / `unit` |
-| `sensor.piyolog_last_milestone` | 最後の「できた」 | `Milestone` | 数値がある場合は `value` / `unit` |
-| `sensor.piyolog_last_cough` | 最後のせき | `Cough` | 数値がある場合は `value` / `unit` |
-| `sensor.piyolog_last_vomiting` | 最後に吐いた | `Vomiting` | 数値がある場合は `value` / `unit` |
-| `sensor.piyolog_last_rash` | 最後の発疹 | `Rash` | 数値がある場合は `value` / `unit` |
-| `sensor.piyolog_last_injury` | 最後のけが | `Injury` | 数値がある場合は `value` / `unit` |
-| `sensor.piyolog_last_memo` | 最後のメモ | `Memo` | メモ本文は属性 `memo` |
-| `sensor.piyolog_last_other` | 最後のその他 | `Other` | 数値がある場合は `value` / `unit` |
-| `sensor.piyolog_last_custom` | 最後のカスタム記録 | `Custom1` ～ `Custom10` | 10種類の中で最も新しい記録の日時。属性 `custom_type` に元の `type`、メモがある場合は `memo`。共通属性 `count_today` は付きません |
-
-最終記録センサーの状態は「フィードに記録された時刻」です。Home Assistant がその変化を検出した時刻ではありません。複数件が1回の取得でまとめて入った場合、Home Assistant のログブック上の変更時刻は取得時刻側になりますが、センサーの状態値には各記録の `datetime` が入ります。
-
-### 身体計測センサー（6個）
-
-状態は対応する `type` の最新記録の `value.value` です。足サイズ以外には、計測日時 `measured_at` と、フィード範囲内の全計測点を持つ `history` 属性が付きます。
-
-`history` は古い順の配列で、各要素は `{"time": ローカル時刻のISO文字列, "value": 数値}` です。保持上限は新しい順に200点です。Home Assistant のレコーダーには統合導入前の状態履歴が無いため、導入前の推移をグラフ化したい場合に使えます。
-
-| entity_id | 表示名 | `type` | 状態の単位 | 属性・備考 |
-|---|---|---|---|---|
-| `sensor.piyolog_weight` | 体重 | `Weight` | kg | `measured_at`、`history`。長期統計にも投入します |
-| `sensor.piyolog_height` | 身長 | `Height` | cm | `measured_at`、`history`。長期統計にも投入します |
-| `sensor.piyolog_temperature` | 体温 | `Temperature` | °C | `measured_at`、`history`。長期統計にも投入します |
-| `sensor.piyolog_head_circumference` | 頭囲 | `Head` | cm | `measured_at`、`history`。長期統計にも投入します |
-| `sensor.piyolog_chest_circumference` | 胸囲 | `Chest` | cm | `measured_at`、`history`。長期統計にも投入します |
-| `sensor.piyolog_foot_size` | 足サイズ | `Foot` | cm | 状態は `value.left` を優先し、左が無い場合は `value.right`。属性 `measured_at` と、存在する側の `left` / `right`。`history` と長期統計の対象外です |
-
-身体計測には別途「最後の体重」などの timestamp センサーは作りません。最新の計測日時は各センサーの `measured_at` 属性で確認します。
-
-### 当日集計センサー（10個）
-
-| entity_id | 表示名 | 元になるフィード値 | 算出方法 | 単位・属性 |
-|---|---|---|---|---|
-| `sensor.piyolog_today_breast_feeding_count` | 今日の授乳回数 | 今日の `BreastFeeding` 件数 | 値の有無にかかわらず記録件数を数えます | 回 |
-| `sensor.piyolog_today_breast_feeding_duration` | 今日の授乳時間 | `leftTime`、`rightTime` | 各記録の左右を秒で合計し、分へ換算して小数第1位まで表示 | 分 |
-| `sensor.piyolog_today_breast_feeding_total` | 今日の母乳量 | `BreastFeeding.value.value` | 数値が入っている記録だけを合計します | ml。属性 `count_today` は全授乳回数、`measured_count` は量が記録された回数 |
-| `sensor.piyolog_today_formula_total` | 今日のミルク量 | `Formula.value.value` | 数値が入っている記録だけを合計します | ml。属性 `count_today` は量の有無を含むミルク記録数 |
-| `sensor.piyolog_today_expressed_breast_milk_total` | 今日の搾母乳量 | `ExpressedBreastMilk.value.value` | 数値が入っている記録だけを合計します | ml |
-| `sensor.piyolog_today_pumping_total` | 今日の搾乳量 | `Pumping.value.value` | 数値が入っている記録だけを合計します | ml |
-| `sensor.piyolog_today_drink_total` | 今日ののみもの量 | `Drink.value.value` | 数値が入っている記録だけを合計します | ml |
-| `sensor.piyolog_today_pee_count` | 今日のおしっこ回数 | 今日の `Pee` 件数 | 記録件数を数えます | 回 |
-| `sensor.piyolog_today_poop_count` | 今日のうんち回数 | 今日の `Poop` 件数 | 記録件数を数えます | 回 |
-| `sensor.piyolog_today_sleep_total` | 今日の睡眠時間 | `Sleep` / `WakeUp` のペア | 睡眠区間と今日の重なりを合計し、分へ換算して小数第1位まで表示。進行中は現在時刻まで | 分 |
-
-量センサーが `0 ml` の場合、「その種類の記録自体が無い」か「記録はあるが量が未入力」のどちらかです。母乳量は `measured_count`、ミルク量は `count_today` で区別できます。その他の量センサーでは、タイムラインや最終記録も合わせて確認してください。
-
-### 状態・タイムライン・フィード状態（4個）
-
-| entity_id | 表示名 | 状態 | 属性 |
-|---|---|---|---|
-| `binary_sensor.piyolog_sleeping` | 睡眠中 | 最後に未終了の `Sleep` があれば ON、それ以外は OFF | `sleeping_since`: ONの場合は睡眠開始時刻、OFFの場合は `null` |
-| `sensor.piyolog_timeline` | タイムライン | 全種類を通じた最新記録の `datetime` | `records`: 今日の記録を新しい順に最大50件。`records_today`: 属性に保持している件数。`generated_at`: フィード生成時刻 |
-| `sensor.piyolog_recent_events` | 直近の記録 | 全種類を通じた最新記録の `datetime` | `records`: 日付を問わず新しい順に最大100件。`count`: 属性に保持している件数。`total_records`: マージ後の全記録数。`generated_at`: フィード生成時刻 |
-| `sensor.piyolog_last_update` | フィード最終更新 | フィードの `generated_at`。2本構成では新しい方 | `record_count`: マージ後の全記録数 |
-
-`sensor.piyolog_timeline` の `records` は当日の分だけですが、状態そのものは全期間の最新記録です。そのため、今日まだ記録が無くても、状態には前日以前の最新記録日時が入り、`records` は空になることがあります。
-
-#### タイムライン項目の形式
-
-`records` の各要素は次の形式です。
-
-| キー | 内容 |
-|---|---|
-| `time` | `datetime` を Home Assistant の既定タイムゾーンへ変換したISO文字列 |
-| `type` | フィードの `type` をそのまま保持 |
-| `label` | `type` に対応する日本語ラベル。カスタム記録は「カスタム1」など |
-| `summary` | フィード値から生成した短い要約。要約を作らない種類では空文字列 |
-| `memo` | メモがある場合だけ含めます |
-
-`summary` の生成規則は次のとおりです。
-
-| 対象 | `summary` の形式 |
-|---|---|
-| `BreastFeeding` | 記録されている項目だけを並べます。例: `左5分 右4分 80ml`。左右は秒から分へ換算し四捨五入 |
-| `Formula` / `ExpressedBreastMilk` / `Pumping` / `Drink` | `120ml`。量が無い場合は空文字列 |
-| `Poop` | 量・かたさ・色を日本語化し、`・` で連結。例: `ふつう・やわらかめ・黄` |
-| `Temperature` | `36.7℃` |
-| `Weight` | `6.3kg` |
-| `Height` / `Head` / `Chest` | `60cm` |
-| `Foot` | 記録されている側だけを並べます。例: `左9cm 右9.2cm` |
-| その他の種類 | 空文字列。時刻、`label`、`memo` で内容を表します |
+全エンティティの対応表（最終記録センサー25個、身体計測センサー6個、当日集計センサー10個、状態・タイムライン・フィード状態4個）と表の読み方は、[対応表リファレンス](docs/reference.md#エンティティ対応表) に分けました。
 
 ## 長期統計への自動インポート
 
@@ -407,36 +251,7 @@ It exposes feed records as entities, imports past records into long-term statist
 
 レコーダーが有効でない環境では投入されません。
 
-### 身体計測の統計
-
-体重・身長・体温・頭囲・胸囲は、各センサー自身の統計として投入します。足サイズは対象外です。
-
-| フィード `type` | 統計ID | 単位 | 投入方法 |
-|---|---|---|---|
-| `Weight` | `sensor.piyolog_weight` | kg | 過去日分を1時間ごとにまとめ、各時間の平均・最小・最大を投入 |
-| `Height` | `sensor.piyolog_height` | cm | 同上 |
-| `Temperature` | `sensor.piyolog_temperature` | °C | 同上 |
-| `Head` | `sensor.piyolog_head_circumference` | cm | 同上 |
-| `Chest` | `sensor.piyolog_chest_circumference` | cm | 同上 |
-
-当日分は対象外です。当日分は Home Assistant のレコーダーが、稼働中のセンサー状態から通常どおり生成します。
-
-### 日次合計の外部統計
-
-日次合計は、外部統計 `piyolog:daily_*` として投入します。各日について、値が計算できた系列だけを作成し、値のない日を0で埋めることはありません。当日分も含み、フィード更新のたびにその時点までの値へ更新されます。
-
-| 統計ID | 元になる記録・項目 | 内容 | 単位 |
-|---|---|---|---|
-| `piyolog:daily_breast_feeding_ml` | `BreastFeeding.value.value` | 量が記録された母乳の1日合計 | ml |
-| `piyolog:daily_breast_feeding_count` | `BreastFeeding` | 1日の授乳回数 | なし（回数） |
-| `piyolog:daily_breast_feeding_minutes` | `leftTime` + `rightTime` | 1日の授乳時間 | 分 |
-| `piyolog:daily_formula_ml` | `Formula.value.value` | 1日のミルク量 | ml |
-| `piyolog:daily_expressed_breast_milk_ml` | `ExpressedBreastMilk.value.value` | 1日の搾母乳量 | ml |
-| `piyolog:daily_pumping_ml` | `Pumping.value.value` | 1日の搾乳量 | ml |
-| `piyolog:daily_drink_ml` | `Drink.value.value` | 1日ののみもの量 | ml |
-| `piyolog:daily_pee_count` | `Pee` | 1日のおしっこ回数 | なし（回数） |
-| `piyolog:daily_poop_count` | `Poop` | 1日のうんち回数 | なし（回数） |
-| `piyolog:daily_sleep_minutes` | `Sleep` / `WakeUp` | 1日に属する睡眠時間。日をまたぐ場合は各日へ分割 | 分 |
+統計IDの対応表（身体計測の統計、日次合計の外部統計）は、[対応表リファレンス](docs/reference.md#長期統計の対応表) に分けました。
 
 ### 統計利用時の注意
 
@@ -500,7 +315,7 @@ entity: sensor.piyolog_timeline
 | 設定 | 意味 | 既定値（diaper） | 既定値（feeding） |
 |---|---|---:|---:|
 | `mode` | `diaper`（うんち／おしっこ）または `feeding`（搾母乳／母乳／ミルク） | `diaper` | — |
-| `entity` | 対象のお子様を特定するアンカー。ここから同じ接頭辞の最終記録センサーを参照します | `sensor.piyolog_timeline` | 同左 |
+| `entity` | 対象のお子様を特定するアンカー。ここから同じ接頭辞の最終記録センサーを参照します | <code>sensor.<wbr>piyolog_<wbr>timeline</code> | 同左 |
 | `title` | カードのタイトル | おむつ経過時間 | ミルク経過時間 |
 | `yellow_after_hours` | 緑→黄の切替わり（時間） | 2.5 | 2.5 |
 | `red_after_hours` | 黄→赤の切替わり（時間） | 3 | 3 |
@@ -530,7 +345,7 @@ entity: sensor.piyolog_timeline
 
 | リクエスト項目 | 内容 |
 |---|---|
-| `entity_id` | 対象の PiyoLog 設定エントリに属するエンティティ。カードでは `sensor.piyolog_timeline` の使用を想定しています |
+| `entity_id` | 対象の PiyoLog 設定エントリに属するエンティティ。カードでは <code>sensor.<wbr>piyolog_<wbr>timeline</code> の使用を想定しています |
 | `date` | ローカル日付（`YYYY-MM-DD`） |
 
 応答:
@@ -539,7 +354,7 @@ entity: sensor.piyolog_timeline
 |---|---|
 | `date` | 要求された日付 |
 | `entries` | その日のタイムライン項目。新しい順、最大300件。基本形式は前述のタイムライン項目と同じです |
-| `entries[].duration_minutes` | `WakeUp` に対応する `Sleep` がある場合だけ追加される睡眠時間（分） |
+| <code>entries[].<wbr>duration_minutes</code> | `WakeUp` に対応する `Sleep` がある場合だけ追加される睡眠時間（分） |
 | `summary` | その日の日次合計。キーは `breast_feeding_ml`、`sleep_minutes` など長期統計の日次系列と同じ名前で、値がある項目だけを含みます |
 | `generated_at` | 応答に使ったフィードの生成時刻 |
 
@@ -594,6 +409,7 @@ tests/
   test_frontend.py     同梱カードの同梱・登録チェック
 docs/
   cards.md             同梱カードの詳細とトラブルシューティング
+  reference.md         エンティティ・統計の対応表（README から分離）
   images/              カードのサンプル画像（実際のカードコード＋架空データで描画）
 ```
 

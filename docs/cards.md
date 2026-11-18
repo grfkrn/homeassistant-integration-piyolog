@@ -23,7 +23,7 @@
 
 | 設定 | 意味 | 既定値 |
 |---|---|---|
-| `entity` | 対象のお子様を特定するアンカー。通常はタイムラインセンサー | `sensor.piyolog_timeline` |
+| `entity` | 対象のお子様を特定するアンカー。通常はタイムラインセンサー | <code>sensor.<wbr>piyolog_<wbr>timeline</code> |
 | `title` | 任意のタイトル | （なし） |
 
 ```yaml
@@ -43,8 +43,8 @@ entity: sensor.piyolog_timeline
 
 | モード | 既定タイトル | 計測対象（グループ内で最も新しい記録から計測） |
 |---|---|---|
-| `diaper` | おむつ経過時間 | `sensor.piyolog_last_poop`（うんち）、`sensor.piyolog_last_pee`（おしっこ） |
-| `feeding` | ミルク経過時間 | `sensor.piyolog_last_expressed_breast_milk`（搾母乳）、`sensor.piyolog_last_breast_feeding`（母乳）、`sensor.piyolog_last_formula`（ミルク）。搾乳（Pumping）は授乳ではないため対象外 |
+| `diaper` | おむつ経過時間 | <code>sensor.<wbr>piyolog_<wbr>last_<wbr>poop</code>（うんち）、<code>sensor.<wbr>piyolog_<wbr>last_<wbr>pee</code>（おしっこ） |
+| `feeding` | ミルク経過時間 | <code>sensor.<wbr>piyolog_<wbr>last_<wbr>expressed_<wbr>breast_<wbr>milk</code>（搾母乳）、<code>sensor.<wbr>piyolog_<wbr>last_<wbr>breast_<wbr>feeding</code>（母乳）、<code>sensor.<wbr>piyolog_<wbr>last_<wbr>formula</code>（ミルク）。搾乳（Pumping）は授乳ではないため対象外 |
 
 対象センサーはアンカー（`entity`）と同じ接頭辞から自動で解決されます。直接指定したい場合は `entities` に並べることもできます。
 
