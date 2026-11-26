@@ -68,10 +68,16 @@ It exposes feed records as entities, imports past records into long-term statist
 
 ### マーケットプレイス（HACS）
 
-1. マーケットプレイス（HACS）→ ⋯ → カスタムリポジトリに `https://github.com/grfkrn/homeassistant-integration-piyolog` を「統合」として追加します
-2. 「PiyoLog」をインストールし、Home Assistant を再起動します
+1. マーケットプレイス（HACS）で「PiyoLog」を検索し、インストールします
+2. Home Assistant を再起動します
 3. 「設定 → デバイスとサービス → 統合を追加」から「PiyoLog」を選びます
 4. 下の「設定項目とフィードURLの対応表」に従って入力します
+
+マーケットプレイス（HACS）で見つからない場合は、カスタムリポジトリとして追加することもできます。
+
+1. マーケットプレイス（HACS）→ ⋯ → カスタムリポジトリに `https://github.com/grfkrn/homeassistant-integration-piyolog` を「統合」として追加します
+2. 「PiyoLog」をインストールし、Home Assistant を再起動します
+3. 上記3以降を行ってください
 
 ### 手動
 

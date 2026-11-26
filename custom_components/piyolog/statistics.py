@@ -6,13 +6,18 @@ was installed. To make the past visible in graphs, the aggregated feed
 data is imported as long-term statistics:
 
 - Body measurements are imported as statistics of their sensor entities
-  (``async_import_statistics``, source ``recorder``). Only past days are
-  imported; the recorder compiles today's buckets from live states.
+  (``async_import_statistics``, source ``recorder``). The entity id is
+  resolved from the entity registry by unique id, so renamed entities
+  and the ``_2`` suffixes of additional config entries map to the right
+  series. Only past days are imported; the recorder compiles today's
+  buckets from live states.
 - Per-day totals are imported as external statistics under
-  ``piyolog:daily_*`` statistic ids (``async_add_external_statistics``).
+  entry-specific ``piyolog:daily_*_<entry id>`` statistic ids
+  (``async_add_external_statistics``), so the series of several
+  children never share one bucket.
 
 Imports are idempotent (the same bucket overwrites itself) and are only
-re-sent when the aggregated content changes.
+re-sent when the aggregated content of that series changes.
 """
 
 from __future__ import annotations
@@ -34,6 +39,7 @@ from homeassistant.components.recorder.statistics import (
 )
 from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import HomeAssistantError
+from homeassistant.helpers import entity_registry as er
 
 from .const import (
     DOMAIN,
@@ -47,13 +53,16 @@ from .feed import AggregatedData
 
 _LOGGER = logging.getLogger(__name__)
 
-# (feed type, entity_id, unit_of_measurement, unit_class)
+# (feed type, sensor key, unit_of_measurement, unit_class)
+# The sensor key is the suffix of the entity's unique id
+# (``<entry_id>_<key>``); the entity id itself is resolved from the
+# entity registry at import time.
 MEASUREMENTS: list[tuple[str, str, str, str]] = [
-    (TYPE_WEIGHT, "sensor.piyolog_weight", "kg", "mass"),
-    (TYPE_HEIGHT, "sensor.piyolog_height", "cm", "length"),
-    (TYPE_TEMPERATURE, "sensor.piyolog_temperature", "°C", "temperature"),
-    (TYPE_HEAD, "sensor.piyolog_head_circumference", "cm", "length"),
-    (TYPE_CHEST, "sensor.piyolog_chest_circumference", "cm", "length"),
+    (TYPE_WEIGHT, "weight", "kg", "mass"),
+    (TYPE_HEIGHT, "height", "cm", "length"),
+    (TYPE_TEMPERATURE, "temperature", "°C", "temperature"),
+    (TYPE_HEAD, "head_circumference", "cm", "length"),
+    (TYPE_CHEST, "chest_circumference", "cm", "length"),
 ]
 
 # stat key -> (unit_of_measurement, unit_class)
@@ -73,18 +82,15 @@ DAILY_SERIES: dict[str, tuple[str | None, str | None]] = {
 }
 
 
-def _fingerprint(data: AggregatedData) -> str:
-    """Cheap content hash so unchanged data is not re-imported."""
+def _series_fingerprint(payload: Any) -> str:
+    """Cheap content hash so unchanged series are not re-imported."""
 
     def default(obj: Any) -> str:
         return obj.isoformat() if hasattr(obj, "isoformat") else str(obj)
 
-    payload = json.dumps(
-        {"buckets": data.measurement_buckets, "daily": data.daily_totals},
-        default=default,
-        sort_keys=True,
-    )
-    return hashlib.sha1(payload.encode()).hexdigest()
+    return hashlib.sha1(
+        json.dumps(payload, default=default, sort_keys=True).encode()
+    ).hexdigest()
 
 
 def _hour_floor_utc(dt) -> Any:
@@ -92,24 +98,35 @@ def _hour_floor_utc(dt) -> Any:
 
 
 def async_import_feed_statistics(
-    hass: HomeAssistant, data: AggregatedData, state: dict[str, Any]
+    hass: HomeAssistant, data: AggregatedData, state: dict[str, Any], entry_id: str
 ) -> None:
     """Import statistics for one config entry if the content changed.
 
     ``state`` is a per-entry mutable dict used to remember the last
-    imported fingerprint. Failures are logged and swallowed: statistics
-    must never break the regular data update.
+    imported fingerprint of each series. Failures are logged and
+    swallowed: statistics must never break the regular data update.
     """
     if "recorder" not in hass.config.components:
         return
-    fingerprint = _fingerprint(data)
-    if state.get("fingerprint") == fingerprint:
-        return
+    entity_registry = er.async_get(hass)
     # Each series is imported independently: one bad series must not
     # block the others.
-    for feed_type, entity_id, unit, unit_class in MEASUREMENTS:
+    for feed_type, key, unit, unit_class in MEASUREMENTS:
         buckets = data.measurement_buckets.get(feed_type)
         if not buckets:
+            continue
+        state_key = f"measurement:{key}"
+        fingerprint = _series_fingerprint(buckets)
+        if state.get(state_key) == fingerprint:
+            continue
+        # Resolve the real entity id from the unique id: additional
+        # entries get _2-suffixed entity ids and users may rename them.
+        entity_id = entity_registry.async_get_entity_id(
+            "sensor", DOMAIN, f"{entry_id}_{key}"
+        )
+        if entity_id is None:
+            # Entity not registered yet; retry on the next update
+            # without marking this series as imported.
             continue
         metadata: StatisticMetaData = {
             "mean_type": StatisticMeanType.ARITHMETIC,
@@ -135,16 +152,25 @@ def async_import_feed_statistics(
             _LOGGER.warning(
                 "PiyoLog statistics import failed for %s: %s", entity_id, err
             )
+            continue
+        state[state_key] = fingerprint
     for key, (unit, unit_class) in DAILY_SERIES.items():
         points = data.daily_totals.get(key)
         if not points:
             continue
+        state_key = f"daily:{key}"
+        fingerprint = _series_fingerprint(points)
+        if state.get(state_key) == fingerprint:
+            continue
+        # The entry id keeps the external series of several config
+        # entries (one per child) apart.
+        statistic_id = f"{DOMAIN}:daily_{key}_{entry_id.lower()}"
         metadata = {
             "mean_type": StatisticMeanType.ARITHMETIC,
             "has_sum": False,
             "name": None,
             "source": DOMAIN,
-            "statistic_id": f"{DOMAIN}:daily_{key}",
+            "statistic_id": statistic_id,
             "unit_class": unit_class,
             "unit_of_measurement": unit,
         }
@@ -157,8 +183,9 @@ def async_import_feed_statistics(
         except HomeAssistantError as err:
             _LOGGER.warning(
                 "PiyoLog statistics import failed for %s: %s",
-                metadata["statistic_id"],
+                statistic_id,
                 err,
             )
-    state["fingerprint"] = fingerprint
-    _LOGGER.debug("PiyoLog statistics imported (fingerprint %s)", fingerprint[:8])
+            continue
+        state[state_key] = fingerprint
+    _LOGGER.debug("PiyoLog statistics import pass done for entry %s", entry_id[:8])

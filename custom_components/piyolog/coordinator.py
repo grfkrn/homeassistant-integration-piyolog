@@ -58,6 +58,7 @@ class PiyologCoordinator(DataUpdateCoordinator[AggregatedData]):
         self._long_last_error: str | None = None
         self._consecutive_404 = 0
         self._statistics_state: dict = {}
+        self._entry_id: str = entry.entry_id
         # Latest merged feed records (ascending), kept so the WebSocket
         # API can serve any day in the feed window to the Lovelace card.
         self.records: list[Record] = []
@@ -89,7 +90,9 @@ class PiyologCoordinator(DataUpdateCoordinator[AggregatedData]):
             generated_at=generated_at,
         )
         # Backfill long-term statistics with the feed's past records.
-        async_import_feed_statistics(self.hass, data, self._statistics_state)
+        async_import_feed_statistics(
+            self.hass, data, self._statistics_state, self._entry_id
+        )
         return data
 
     async def _fetch_long(

@@ -170,7 +170,7 @@ README から分けた対応表の一覧です。導入や設定の説明は [RE
 
 ### 身体計測の統計
 
-体重・身長・体温・頭囲・胸囲は、各センサー自身の統計として投入します。足サイズは対象外です。
+体重・身長・体温・頭囲・胸囲は、各センサー自身の統計として投入します。足サイズは対象外です。統計IDはセンサーのentity_idで、unique IDからエンティティレジストリで解決します。そのため、entity_idを変更した場合や、2人目以降で`_2`が付いたentity_idでも、正しい系列へ投入されます。下表の統計IDは1人目の既定のentity_idです。
 
 | フィード `type` | 統計ID | 単位 | 投入方法 |
 |---|---|---|---|
@@ -184,17 +184,17 @@ README から分けた対応表の一覧です。導入や設定の説明は [RE
 
 ### 日次合計の外部統計
 
-日次合計は、外部統計 `piyolog:daily_*` として投入します。各日について、値が計算できた系列だけを作成し、値のない日を0で埋めることはありません。当日分も含み、フィード更新のたびにその時点までの値へ更新されます。
+日次合計は、外部統計 `piyolog:daily_*_{エントリID}` として投入します。末尾のエントリIDは、設定エントリIDを小文字化したもので、子どもごとに系列が分かれます。各日について、値が計算できた系列だけを作成し、値のない日を0で埋めることはありません。当日分も含み、フィード更新のたびにその時点までの値へ更新されます。
 
 | 統計ID | 元になる記録・項目 | 内容 | 単位 |
 |---|---|---|---|
-| <code>piyolog:<wbr>daily_<wbr>breast_<wbr>feeding_<wbr>ml</code> | <code>BreastFeeding.<wbr>value.<wbr>value</code> | 量が記録された母乳の1日合計 | ml |
-| <code>piyolog:<wbr>daily_<wbr>breast_<wbr>feeding_<wbr>count</code> | `BreastFeeding` | 1日の授乳回数 | なし（回数） |
-| <code>piyolog:<wbr>daily_<wbr>breast_<wbr>feeding_<wbr>minutes</code> | `leftTime` + `rightTime` | 1日の授乳時間 | 分 |
-| <code>piyolog:<wbr>daily_<wbr>formula_<wbr>ml</code> | `Formula.value.value` | 1日のミルク量 | ml |
-| <code>piyolog:<wbr>daily_<wbr>expressed_<wbr>breast_<wbr>milk_<wbr>ml</code> | <code>ExpressedBreastMilk.<wbr>value.<wbr>value</code> | 1日の搾母乳量 | ml |
-| <code>piyolog:<wbr>daily_<wbr>pumping_<wbr>ml</code> | `Pumping.value.value` | 1日の搾乳量 | ml |
-| <code>piyolog:<wbr>daily_<wbr>drink_<wbr>ml</code> | `Drink.value.value` | 1日ののみもの量 | ml |
-| <code>piyolog:<wbr>daily_<wbr>pee_<wbr>count</code> | `Pee` | 1日のおしっこ回数 | なし（回数） |
-| <code>piyolog:<wbr>daily_<wbr>poop_<wbr>count</code> | `Poop` | 1日のうんち回数 | なし（回数） |
-| <code>piyolog:<wbr>daily_<wbr>sleep_<wbr>minutes</code> | `Sleep` / `WakeUp` | 1日に属する睡眠時間。日をまたぐ場合は各日へ分割 | 分 |
+| <code>piyolog:<wbr>daily_<wbr>breast_<wbr>feeding_<wbr>ml_<wbr>{エントリID}</code> | <code>BreastFeeding.<wbr>value.<wbr>value</code> | 量が記録された母乳の1日合計 | ml |
+| <code>piyolog:<wbr>daily_<wbr>breast_<wbr>feeding_<wbr>count_<wbr>{エントリID}</code> | `BreastFeeding` | 1日の授乳回数 | なし（回数） |
+| <code>piyolog:<wbr>daily_<wbr>breast_<wbr>feeding_<wbr>minutes_<wbr>{エントリID}</code> | `leftTime` + `rightTime` | 1日の授乳時間 | 分 |
+| <code>piyolog:<wbr>daily_<wbr>formula_<wbr>ml_<wbr>{エントリID}</code> | `Formula.value.value` | 1日のミルク量 | ml |
+| <code>piyolog:<wbr>daily_<wbr>expressed_<wbr>breast_<wbr>milk_<wbr>ml_<wbr>{エントリID}</code> | <code>ExpressedBreastMilk.<wbr>value.<wbr>value</code> | 1日の搾母乳量 | ml |
+| <code>piyolog:<wbr>daily_<wbr>pumping_<wbr>ml_<wbr>{エントリID}</code> | `Pumping.value.value` | 1日の搾乳量 | ml |
+| <code>piyolog:<wbr>daily_<wbr>drink_<wbr>ml_<wbr>{エントリID}</code> | `Drink.value.value` | 1日ののみもの量 | ml |
+| <code>piyolog:<wbr>daily_<wbr>pee_<wbr>count_<wbr>{エントリID}</code> | `Pee` | 1日のおしっこ回数 | なし（回数） |
+| <code>piyolog:<wbr>daily_<wbr>poop_<wbr>count_<wbr>{エントリID}</code> | `Poop` | 1日のうんち回数 | なし（回数） |
+| <code>piyolog:<wbr>daily_<wbr>sleep_<wbr>minutes_<wbr>{エントリID}</code> | `Sleep` / `WakeUp` | 1日に属する睡眠時間。日をまたぐ場合は各日へ分割 | 分 |
